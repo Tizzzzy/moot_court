@@ -244,6 +244,7 @@ export function CourtPage() {
           onEditMessage={handleEditMessage}
           editingMessage={editingMessage}
           caseData={caseData}
+          currentSpeaker={courtSession.currentSpeaker}
           evidenceUploadAllowed={courtSession.evidenceUploadAllowed}
           verdictIssued={courtSession.verdictIssued}
         />

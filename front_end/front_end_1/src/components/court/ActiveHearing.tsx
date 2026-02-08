@@ -23,6 +23,7 @@ interface ActiveHearingProps {
   onEditMessage?: (index: number) => void;
   editingMessage?: string;
   caseData?: CaseData | null;
+  currentSpeaker?: string;
   evidenceUploadAllowed?: boolean;
   verdictIssued?: boolean;
 }
@@ -75,6 +76,7 @@ export function ActiveHearing({
   onEditMessage,
   editingMessage,
   caseData,
+  currentSpeaker = "Plaintiff",
   evidenceUploadAllowed,
   verdictIssued
 }: ActiveHearingProps) {
@@ -249,7 +251,8 @@ export function ActiveHearing({
       {/* Chat Input */}
       <ChatInput
         onSend={onSendMessage}
-        disabled={verdictIssued}
+        disabled={verdictIssued || currentSpeaker !== "Plaintiff"}
+        currentSpeaker={currentSpeaker}
         evidenceCount={evidenceCount}
         onViewEvidence={onViewEvidence}
         hasSubmittedEvidence={hasSubmittedEvidence}

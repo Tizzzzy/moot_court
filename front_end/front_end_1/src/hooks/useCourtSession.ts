@@ -196,10 +196,10 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
             );
 
             if (alreadyExists) {
-              // Just update evidence status
+              // Just update evidence status - preserve WebSocket state if it was already set
               return {
                 ...s,
-                evidenceUploadAllowed: response.evidence_upload_allowed || false,
+                evidenceUploadAllowed: s.evidenceUploadAllowed || response.evidence_upload_allowed === true,
               };
             }
 
@@ -214,7 +214,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
               ...s,
               messages: [...s.messages, aiMessage],
               currentSpeaker: response.ai_response!.role,
-              evidenceUploadAllowed: response.evidence_upload_allowed || false,
+              evidenceUploadAllowed: s.evidenceUploadAllowed || response.evidence_upload_allowed === true,
             };
           });
         }
