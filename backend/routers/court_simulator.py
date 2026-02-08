@@ -199,7 +199,6 @@ async def send_plaintiff_message(
 
         # Collect all AI responses (Judge and/or Defendant may both respond)
         all_responses = []
-        evidence_allowed = court_session.evidence_upload_allowed
 
         # Decide first who should respond
         logger.info(f"Session {session_id}: Deciding next speaker...")
@@ -262,14 +261,6 @@ async def send_plaintiff_message(
                     ),
                 )
 
-                # Check if Judge requested evidence
-                if ai_response.evidence_request and ai_response.evidence_request.requesting_evidence:
-                    evidence_allowed = True
-                    await ws_manager.send_evidence_request(
-                        session_id,
-                        True,
-                        ai_response.evidence_request.evidence_types or [],
-                    )
 
                 # Decide next speaker
                 next_speaker = court_session.decide_next_speaker()
@@ -313,7 +304,6 @@ async def send_plaintiff_message(
                 status="success",
                 feedback=plaintiff_feedback,
                 message="Waiting for court response...",
-                evidence_upload_allowed=evidence_allowed,
             )
 
         last_response = all_responses[-1]
@@ -336,7 +326,6 @@ async def send_plaintiff_message(
                 inner_thought=last_response.inner_thought,
                 evidence_request=evidence_req_schema,
             ),
-            evidence_upload_allowed=evidence_allowed,
         )
     except Exception as e:
         logger.error(f"Error sending message: {e}")
@@ -394,7 +383,7 @@ async def upload_evidence(
     """
     Upload evidence files during the hearing.
 
-    Only allowed when Judge has explicitly requested evidence.
+    Evidence can be uploaded anytime during Plaintiff's turn.
     """
     try:
         service = get_session_service()
@@ -403,11 +392,10 @@ async def upload_evidence(
         if not court_session:
             raise ValueError(f"Session {session_id} not found")
 
-        # Validate evidence permission
-        if not court_session.evidence_upload_allowed:
+        # Validate it's Plaintiff's turn
+        if court_session.current_speaker != "Plaintiff":
             raise ValueError(
-                "Evidence upload not currently allowed. "
-                "The Judge must request evidence first."
+                "Evidence can only be uploaded during your turn to speak."
             )
 
         # Upload files to the session's evidence directory
@@ -421,9 +409,6 @@ async def upload_evidence(
         # Store file paths in session for AI processing
         file_paths = [f["path"] for f in uploaded]
         court_session.evidence_buffer.extend(file_paths)
-
-        # Reset evidence upload allowed after successful upload
-        court_session.evidence_upload_allowed = False
 
         # Add a system message indicating evidence was submitted
         file_names = [f["filename"] for f in uploaded]
@@ -453,9 +438,11 @@ async def upload_evidence(
             ),
         )
 
-        # Decide next speaker
-        next_speaker = court_session.decide_next_speaker()
-        await ws_manager.send_next_speaker(session_id, next_speaker)
+        # ALWAYS return turn to Plaintiff after evidence acknowledgement
+        # This prevents Defendant from interrupting while Plaintiff is typing context
+        court_session.current_speaker = "Plaintiff"
+        await ws_manager.send_next_speaker(session_id, "Plaintiff")
+        logger.info(f"Session {session_id}: Returned turn to Plaintiff after evidence acknowledgement")
 
         service.save_session(session_id, db)
 

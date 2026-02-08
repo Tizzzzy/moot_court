@@ -64,19 +64,17 @@ export interface Message {
 }
 
 export interface SendMessageResponse {
-  status: "success" | "objection_raised";
+  status: "success" | "objection_raised" | "verdict";
   objection?: ObjectionDecision;
   feedback?: PlaintiffFeedback;
   message?: string;
   ai_response?: CourtroomResponse;
-  evidence_upload_allowed?: boolean;
 }
 
 export interface SessionState {
   session_id: string;
   current_speaker: string;
   turn_number: number;
-  evidence_upload_allowed: boolean;
   history: Message[];
 }
 
@@ -182,7 +180,6 @@ export interface CourtSessionState {
   status: SessionStatus;
   currentSpeaker: string;
   turnNumber: number;
-  evidenceUploadAllowed: boolean;
   verdictIssued: boolean;
   messages: ChatMessage[];
   isLoading: boolean;

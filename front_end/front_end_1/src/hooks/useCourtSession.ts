@@ -35,7 +35,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     status: "active",
     currentSpeaker: "judge",
     turnNumber: 0,
-    evidenceUploadAllowed: false,
     verdictIssued: false,
     messages: [],
     isLoading: false,
@@ -118,7 +117,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         messages,
         currentSpeaker: sessionState.current_speaker,
         turnNumber: sessionState.turn_number,
-        evidenceUploadAllowed: sessionState.evidence_upload_allowed,
         status: "active",
         isLoading: false,
       }));
@@ -196,11 +194,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
             );
 
             if (alreadyExists) {
-              // Just update evidence status - preserve WebSocket state if it was already set
-              return {
-                ...s,
-                evidenceUploadAllowed: s.evidenceUploadAllowed || response.evidence_upload_allowed === true,
-              };
+              return s;
             }
 
             const aiMessage: ChatMessage = {
@@ -214,7 +208,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
               ...s,
               messages: [...s.messages, aiMessage],
               currentSpeaker: response.ai_response!.role,
-              evidenceUploadAllowed: s.evidenceUploadAllowed || response.evidence_upload_allowed === true,
             };
           });
         }
@@ -255,15 +248,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         return;
       }
 
-      if (!state.evidenceUploadAllowed) {
-        setState((s) => ({
-          ...s,
-          error:
-            "Evidence upload not currently allowed. Judge must request evidence first.",
-        }));
-        return;
-      }
-
       setState((s) => ({ ...s, isLoading: true, error: null }));
 
       try {
@@ -289,7 +273,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         throw error;
       }
     },
-    [state.sessionId, state.evidenceUploadAllowed]
+    [state.sessionId]
   );
 
   /**
@@ -395,17 +379,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
           ...s,
           currentSpeaker: nextSpeaker.speaker,
           verdictIssued: nextSpeaker.speaker === "Verdict",
-        }));
-        break;
-
-      case "evidence_request":
-        const evidenceReq = message.data as {
-          requesting: boolean;
-          types?: string[];
-        };
-        setState((s) => ({
-          ...s,
-          evidenceUploadAllowed: evidenceReq.requesting,
         }));
         break;
 

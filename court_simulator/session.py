@@ -22,11 +22,9 @@ class CourtSession:
 
         # State
         self.history: List[Dict] = []
-        self.evidence_upload_allowed: bool = False
         self.current_speaker: str = "Judge"
         self.evidence_buffer: List[str] = []  # Now stores file paths, not dicts
         self.turn_number: int = 0
-        self.verdict_issued: bool = False
 
     def process_plaintiff_turn(
         self,
@@ -42,18 +40,10 @@ class CourtSession:
 
         Returns:
             (objection_raised, objection_decision)
-
-        Raises:
-            ValueError: If evidence upload not allowed
         """
-        # Check evidence permission
-        if evidence_paths and not self.evidence_upload_allowed:
-            raise ValueError("Evidence upload not allowed - Judge must request evidence first")
-
         # Store evidence paths in buffer
         if evidence_paths:
             self.evidence_buffer.extend(evidence_paths)
-            self.evidence_upload_allowed = False  # Reset after upload
 
         # Evaluate for objections BEFORE adding to history
         objection = self.agents.evaluate_for_objection(
@@ -82,7 +72,7 @@ class CourtSession:
     def process_ai_turn(self) -> CourtroomResponse:
         """
         Process Judge or Defendant turn.
-        Returns structured response and updates evidence permission if needed.
+        Returns structured response.
 
         Returns:
             CourtroomResponse with dialogue, inner thoughts, and optional evidence request
@@ -94,59 +84,18 @@ class CourtSession:
             role=self.current_speaker,
             history=self.history,
             case_data=self.case_data,
-            evidence_upload_allowed=self.evidence_upload_allowed,
+            evidence_upload_allowed=False,  # Always false - evidence is always available now
             evidence_paths=all_evidence if all_evidence else None
         )
 
-        # Check for verdict BEFORE adding to history
-        if self.current_speaker == "Judge":
-            self.check_for_verdict(response)
-
         # Clear evidence buffer after AI processes it
         self.evidence_buffer = []
-
-        # Check if Judge requested evidence
-        if self.current_speaker == "Judge" and response.evidence_request:
-            if response.evidence_request.requesting_evidence:
-                self.evidence_upload_allowed = True
 
         # Add to history
         self._add_to_history(self.current_speaker, response.dialogue)
         self.turn_number += 1
 
         return response
-
-    def check_for_verdict(self, response: CourtroomResponse) -> bool:
-        """
-        Check if Judge's response contains a final verdict.
-        Returns True if verdict was issued.
-        """
-        if self.current_speaker != "Judge":
-            return False
-
-        # Only check after significant trial progress (turn 5+)
-        if self.turn_number < 5:
-            return False
-
-        dialogue_lower = response.dialogue.lower()
-
-        # Must have verdict keyword AND a decision phrase
-        has_verdict_keyword = any(kw in dialogue_lower for kw in [
-            'verdict', 'ruling', 'judgment', 'my decision'
-        ])
-
-        has_decision = any(phrase in dialogue_lower for phrase in [
-            'i find for', 'i rule in favor', 'judgment for',
-            'plaintiff wins', 'defendant wins', 'case dismissed',
-            'in favor of the plaintiff', 'in favor of the defendant'
-        ])
-
-        if has_verdict_keyword and has_decision:
-            self.verdict_issued = True
-            self.current_speaker = "Verdict"
-            return True
-
-        return False
 
     def decide_next_speaker(self) -> str:
         """

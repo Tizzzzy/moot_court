@@ -1,4 +1,4 @@
-import { ArrowLeft, FileText, Upload } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { HearingStep, Message, EvidenceFile, CaseData } from '../App';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -24,7 +24,6 @@ interface ActiveHearingProps {
   editingMessage?: string;
   caseData?: CaseData | null;
   currentSpeaker?: string;
-  evidenceUploadAllowed?: boolean;
   verdictIssued?: boolean;
 }
 
@@ -77,7 +76,6 @@ export function ActiveHearing({
   editingMessage,
   caseData,
   currentSpeaker = "Plaintiff",
-  evidenceUploadAllowed,
   verdictIssued
 }: ActiveHearingProps) {
   const progress = (currentStep / 7) * 100;
@@ -216,29 +214,6 @@ export function ActiveHearing({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Evidence Upload Allowed Banner */}
-        {evidenceUploadAllowed && (
-          <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Upload className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-green-800 font-medium">Evidence Upload Enabled</p>
-                  <p className="text-green-600 text-sm">The Judge has requested evidence. You can now upload files.</p>
-                </div>
-              </div>
-              <button
-                onClick={onUploadEvidence}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Upload Evidence
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Tips Box */}
         {showTips && (

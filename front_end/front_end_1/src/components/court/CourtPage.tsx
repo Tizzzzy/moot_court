@@ -162,24 +162,10 @@ export function CourtPage() {
       size: file.size
     }));
 
-    // If evidence upload is allowed by Judge, upload immediately
-    if (courtSession.evidenceUploadAllowed) {
-      try {
-        console.log('[CourtPage] Uploading evidence files:', uploadedFiles.map(f => f.name));
-        await courtSession.uploadEvidence(uploadedFiles);
-        setEvidenceFiles(prev => [...prev, ...uploadedEvidenceFiles]);
-        setSubmittedEvidenceNames(uploadedFiles.map(f => f.name));
-        setShowEvidenceIndicator(true);
-        setEvidencePresented(true);
-        console.log('[CourtPage] Evidence uploaded successfully');
-      } catch (error) {
-        console.error('[CourtPage] Failed to upload evidence:', error);
-      }
-    } else {
-      // Store for upload with next message
-      setPendingEvidence(uploadedEvidenceFiles);
-      setPendingEvidenceFiles(uploadedFiles);
-    }
+    // ALWAYS stage evidence for upload with next message
+    setPendingEvidence(uploadedEvidenceFiles);
+    setPendingEvidenceFiles(uploadedFiles);
+    setShowEvidenceIndicator(true);
   };
 
   const handleEditMessage = (index: number) => {
@@ -245,7 +231,6 @@ export function CourtPage() {
           editingMessage={editingMessage}
           caseData={caseData}
           currentSpeaker={courtSession.currentSpeaker}
-          evidenceUploadAllowed={courtSession.evidenceUploadAllowed}
           verdictIssued={courtSession.verdictIssued}
         />
       )}

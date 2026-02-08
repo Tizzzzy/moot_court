@@ -6,6 +6,9 @@ from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 import sys
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Add court_simulator to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -73,7 +76,6 @@ class CourtSessionService:
             status="active",
             current_speaker="Plaintiff",  # After Judge opens, Plaintiff presents case first
             turn_number=1,
-            evidence_upload_allowed=False,
             state_snapshot=self._serialize_session(court_session),
         )
         db.add(db_session)
@@ -129,7 +131,6 @@ class CourtSessionService:
         db_session.state_snapshot = self._serialize_session(court_session)
         db_session.current_speaker = court_session.current_speaker
         db_session.turn_number = court_session.turn_number
-        db_session.evidence_upload_allowed = court_session.evidence_upload_allowed
         db_session.updated_at = datetime.utcnow()
         db.commit()
 
@@ -145,7 +146,6 @@ class CourtSessionService:
             "session_id": session_id,
             "current_speaker": court_session.current_speaker,
             "turn_number": court_session.turn_number,
-            "evidence_upload_allowed": court_session.evidence_upload_allowed,
             "history": [self._response_to_dict(msg) for msg in court_session.history],
         }
 
@@ -226,7 +226,6 @@ class CourtSessionService:
             "evidence_submit_dir": session.evidence_submit_dir,
             "current_speaker": session.current_speaker,
             "turn_number": session.turn_number,
-            "evidence_upload_allowed": session.evidence_upload_allowed,
             "evidence_buffer": session.evidence_buffer,
             "history": session.history,  # Already dicts from session.py
         }
@@ -257,7 +256,6 @@ class CourtSessionService:
         session.session_id = state.get("session_id", "")
         session.current_speaker = state.get("current_speaker", "Judge")
         session.turn_number = state.get("turn_number", 0)
-        session.evidence_upload_allowed = state.get("evidence_upload_allowed", False)
         session.evidence_buffer = state.get("evidence_buffer", [])
         session.history = state.get("history", [])
 
