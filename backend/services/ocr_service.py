@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.models.case import ProcessingJob, Case, Party, JobStatus
 from backend.config import settings
+from backend.utils.path_utils import get_user_ocr_output_dir
 
 
 def parse_date(date_string):
@@ -73,8 +74,7 @@ def run_ocr_pipeline(job_id: str, file_path: str, user_id: str):
         db.commit()
 
         # Step 4: Write extracted_data.json to file system for evidence pipeline
-        ocr_output_dir = Path(settings.BASE_DATA_DIR) / user_id / "ocr_output"
-        ocr_output_dir.mkdir(parents=True, exist_ok=True)
+        ocr_output_dir = get_user_ocr_output_dir(user_id)
         json_output_path = ocr_output_dir / "extracted_data.json"
 
         # Format data to match expected structure

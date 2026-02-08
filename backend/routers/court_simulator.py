@@ -23,6 +23,7 @@ from backend.services.evidence_service import EvidenceService
 from backend.websockets.court_ws import ws_manager
 from pathlib import Path
 import os
+from backend.utils.path_utils import get_extracted_data_path, get_user_evidence_dir
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +45,11 @@ def get_session_service() -> CourtSessionService:
 def get_evidence_service(session_id: str, user_id: str = None) -> EvidenceService:
     """Get evidence service for a session."""
     if session_id not in _evidence_services:
-        base_data_dir = Path(os.getenv("BASE_DATA_DIR", "data"))
         # Use user-specific directory if available
         if user_id:
-            evidence_dir = base_data_dir / user_id / "evidence" / "court_submitted"
+            evidence_dir = get_user_evidence_dir(user_id) / "court_submitted"
         else:
-            evidence_dir = base_data_dir / "evidence" / "court_submitted"
+            evidence_dir = Path("data") / "evidence" / "court_submitted"
         _evidence_services[session_id] = EvidenceService(str(evidence_dir))
     return _evidence_services[session_id]
 
@@ -64,8 +64,7 @@ async def get_case_data(user_id: str = "user_1", case_id: int = 1):
     Returns the case information for the UI to display.
     """
     try:
-        base_data_dir = Path(os.getenv("BASE_DATA_DIR", "data"))
-        case_file = base_data_dir / user_id / "ocr_output" / "extracted_data.json"
+        case_file = get_extracted_data_path(user_id)
 
         if case_file.exists():
             with open(case_file, "r") as f:

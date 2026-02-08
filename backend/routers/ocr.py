@@ -7,6 +7,7 @@ from backend.database import get_db
 from backend.models.case import ProcessingJob, JobType, JobStatus
 from backend.services.ocr_service import run_ocr_pipeline
 from backend.config import settings
+from backend.utils.path_utils import get_user_claims_dir
 
 router = APIRouter()
 
@@ -20,7 +21,6 @@ async def upload_pdf(
 ):
     """Upload PDF and trigger OCR processing"""
     print(f"[UPLOAD] Received: {file.filename} (user: {user_id})")
-    print(f"[UPLOAD] BASE_DATA_DIR: {settings.BASE_DATA_DIR}")
 
     # Validation
     if not file.filename.endswith('.pdf'):
@@ -35,9 +35,8 @@ async def upload_pdf(
     job_id = str(uuid.uuid4())
 
     # Save file
-    user_dir = Path(settings.BASE_DATA_DIR) / user_id / "claims"
+    user_dir = get_user_claims_dir(user_id)
     print(f"[UPLOAD] Creating directory: {user_dir}")
-    user_dir.mkdir(parents=True, exist_ok=True)
     file_path = user_dir / f"{job_id}.pdf"
 
     print(f"[UPLOAD] Saving to: {file_path}")

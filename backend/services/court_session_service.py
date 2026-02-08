@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.models.case import CourtSessionModel, Case
 from court_simulator.session import CourtSession
+from backend.utils.path_utils import get_user_evidence_dir
 
 
 class CourtSessionService:
@@ -21,7 +22,6 @@ class CourtSessionService:
     """
 
     def __init__(self):
-        self.base_data_dir = Path(os.getenv("BASE_DATA_DIR", "data"))
         # self.api_key = os.getenv("GEMINI_API_KEY")
         self.api_key = "AIzaSyDidgcddZDzZS59zPv4f8ztU_Bd7DyrDss"
         # In-memory cache for active sessions
@@ -49,9 +49,8 @@ class CourtSessionService:
 
         # Create evidence directory
         session_id = str(uuid.uuid4())
-        evidence_submit_dir = str(
-            self.base_data_dir / user_id / "evidence" / "court_submitted"
-        )
+        evidence_dir = get_user_evidence_dir(user_id)
+        evidence_submit_dir = str(evidence_dir / "court_submitted")
         os.makedirs(evidence_submit_dir, exist_ok=True)
 
         case_data = self._case_to_dict(case)

@@ -1,17 +1,24 @@
 import os
 import json
 import time
+import sys
+from pathlib import Path
 from typing import List, Dict, Optional, Tuple
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from court_simulator.session import CourtSession
 from court_simulator.agent import ObjectionDecision, PlaintiffFeedback
+from backend.utils.path_utils import get_extracted_data_path, get_user_evidence_dir
 
 # --- Configuration ---
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 USER_ID = "user_1"
-BASE_DATA_DIR = os.path.join(PROJECT_ROOT, "data", USER_ID)
-DATA_FILE = os.path.join(BASE_DATA_DIR, "ocr_output", "extracted_data.json")
-EVIDENCE_SUBMIT_DIR = os.path.join(BASE_DATA_DIR, "evidence", "court_submitted")
-TRANSCRIPT_FILE = os.path.join(BASE_DATA_DIR, "evidence", "court_transcript.json")
+DATA_FILE = str(get_extracted_data_path(USER_ID))
+EVIDENCE_DIR = get_user_evidence_dir(USER_ID)
+EVIDENCE_SUBMIT_DIR = str(EVIDENCE_DIR / "court_submitted")
+TRANSCRIPT_FILE = str(EVIDENCE_DIR / "court_transcript.json")
 
 
 def load_case_data() -> Optional[Dict]:

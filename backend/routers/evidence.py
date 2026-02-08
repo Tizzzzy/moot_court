@@ -6,6 +6,7 @@ from typing import List, Optional
 from backend.config import settings
 from backend.services.openai_evidence import recommend_evidence, create_evidence_folders
 from backend.services.evidence_analysis import evidence_feedback as analyze_evidence_file
+from backend.utils.path_utils import get_user_ocr_output_dir, get_user_evidence_dir
 
 router = APIRouter()
 
@@ -46,9 +47,7 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
     data_dict["defendants"] = [{"name": d.name, "address": d.address} for d in case_data.defendants]
 
     # Create OCR output directory and save extracted data
-    ocr_output_dir = Path(settings.BASE_DATA_DIR) / user_id / "ocr_output"
-    ocr_output_dir.mkdir(parents=True, exist_ok=True)
-
+    ocr_output_dir = get_user_ocr_output_dir(user_id)
     json_path = ocr_output_dir / "extracted_data.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data_dict, f, indent=4, ensure_ascii=False)
@@ -56,7 +55,7 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
     print(f"[CASE] Saved case data for user {user_id}: {json_path}")
 
     # Generate evidence recommendations using OpenAI
-    evidence_dir = Path(settings.BASE_DATA_DIR) / user_id / "evidence"
+    evidence_dir = get_user_evidence_dir(user_id)
     conversation_path = evidence_dir / "evidence_conversation.json"
 
     try:
@@ -67,7 +66,6 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
         evidence_dict = _fallback_recommendations(data_dict)
 
     # Save recommendations
-    evidence_dir.mkdir(parents=True, exist_ok=True)
     with open(conversation_path, "w", encoding="utf-8") as f:
         json.dump(evidence_dict, f, indent=4)
 
@@ -90,7 +88,7 @@ def get_evidence_recommendations(user_id: str):
     create folder structure, and return the recommendations.
     """
     # Load case data
-    json_path = Path(settings.BASE_DATA_DIR) / user_id / "ocr_output" / "extracted_data.json"
+    json_path = get_user_ocr_output_dir(user_id) / "extracted_data.json"
     if not json_path.exists():
         raise HTTPException(404, f"No extracted data found for user {user_id}")
 

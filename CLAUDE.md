@@ -48,6 +48,52 @@ export MINERU_DEVICE_MODE=cuda
 export CUDA_VISIBLE_DEVICES=0
 ```
 
+## Path Configuration
+
+### Default Behavior (No Configuration Required)
+
+By default, all user data is stored in `{project_root}/data/`. This works out of the box on any platform (Windows, Mac, Linux) without any configuration.
+
+### Custom Data Directory (Optional)
+
+To use a different location for user data, set `BASE_DATA_DIR` in `.env`:
+
+```bash
+# Windows (use forward slashes, include drive letter)
+BASE_DATA_DIR=C:/custom/path/to/data
+
+# Mac/Linux
+BASE_DATA_DIR=/custom/path/to/data
+```
+
+**Requirements**:
+- Must be an **absolute path** (includes drive letter on Windows: `C:/...`)
+- Directory will be created automatically if it doesn't exist
+- Use forward slashes even on Windows (not backslashes)
+
+### Troubleshooting Path Errors
+
+If you encounter the error:
+```
+FileNotFoundError: The system cannot find the path specified: '\Users\...'
+```
+
+**Root cause**: The `.env` file contains a Unix-style path (e.g., `/Users/mua/...`) on a Windows system.
+
+**Fix**: Comment out or remove `BASE_DATA_DIR` in `.env` to use the default:
+```bash
+# Option 1: Use default (recommended)
+# BASE_DATA_DIR=
+
+# Option 2: Fix to Windows absolute path format
+BASE_DATA_DIR=C:/Users/yourname/moot_court_data
+```
+
+**Common mistakes**:
+- ❌ Unix paths on Windows: `/Users/...` (missing drive letter)
+- ❌ Backslashes: `C:\Users\...` (use forward slashes: `C:/Users/...`)
+- ❌ Relative paths: `./data` (must be absolute with drive letter on Windows)
+
 ## Architecture
 
 ### Data Flow: 4-Stage Pipeline

@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from backend.database import SessionLocal
 from backend.models.case import Case, Party
 from backend.config import settings
+from backend.utils.path_utils import get_user_ocr_output_dir
 
 
 def backfill_user_data(user_id: str) -> bool:
@@ -55,8 +56,7 @@ def backfill_user_data(user_id: str) -> bool:
         }
 
         # Write file
-        ocr_output_dir = Path(settings.BASE_DATA_DIR) / user_id / "ocr_output"
-        ocr_output_dir.mkdir(parents=True, exist_ok=True)
+        ocr_output_dir = get_user_ocr_output_dir(user_id)
         json_output_path = ocr_output_dir / "extracted_data.json"
 
         with open(json_output_path, "w", encoding="utf-8") as f:

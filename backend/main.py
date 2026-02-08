@@ -10,10 +10,21 @@ from backend.routers import ocr, cases, court_simulator
 from backend.routers import ocr, cases, evidence, case_data
 from backend.database import engine, Base
 from backend.config import settings
+from backend.utils.path_utils import validate_path_config
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Validate path configuration on startup
+    print("[STARTUP] Validating path configuration...")
+    config = validate_path_config()
+    print(f"[STARTUP] Data directory: {config['base_data_dir']}")
+    print(f"[STARTUP] Project root: {config['project_root']}")
+    if config['is_default']:
+        print("[STARTUP] Using default data directory")
+    else:
+        print("[STARTUP] Using custom data directory from BASE_DATA_DIR")
+
     # Create tables on startup
     print("[STARTUP] Creating database tables...")
     Base.metadata.create_all(bind=engine)
