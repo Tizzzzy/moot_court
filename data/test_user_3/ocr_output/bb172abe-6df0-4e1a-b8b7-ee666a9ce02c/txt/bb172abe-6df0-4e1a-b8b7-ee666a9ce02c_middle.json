@@ -1,0 +1,2865 @@
+{
+    "pdf_info": [
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        33,
+                        43,
+                        576,
+                        266
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_caption",
+                            "bbox": [
+                                65,
+                                20,
+                                545,
+                                41
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        67,
+                                        18,
+                                        545,
+                                        34
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                67,
+                                                18,
+                                                545,
+                                                34
+                                            ],
+                                            "score": 1.0,
+                                            "content": "This form is approved by the Illinois Supreme Court and is required to be accepted in all Illinois Circuit Courts.",
+                                            "type": "text"
+                                        }
+                                    ],
+                                    "index": 0
+                                },
+                                {
+                                    "bbox": [
+                                        223,
+                                        28,
+                                        385,
+                                        45
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                223,
+                                                28,
+                                                385,
+                                                45
+                                            ],
+                                            "score": 1.0,
+                                            "content": "Forms are free at ilcourts.info/forms.",
+                                            "type": "text"
+                                        }
+                                    ],
+                                    "index": 1
+                                }
+                            ],
+                            "index": 0.5
+                        },
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                33,
+                                43,
+                                576,
+                                266
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        33,
+                                        43,
+                                        576,
+                                        266
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                33,
+                                                43,
+                                                576,
+                                                266
+                                            ],
+                                            "score": 0.933,
+                                            "html": "<table><tr><td rowspan=1 colspan=2>STATE OF ILLINOIS,CIRCUIT COURTCOUNTY</td><td rowspan=1 colspan=1>SMALL CLAIMS COMPLAINT</td><td rowspan=5 colspan=1>For Court Use Only</td></tr><tr><td rowspan=1 colspan=1>Instructions&lt;</td><td rowspan=2 colspan=2>Zirui Ye</td></tr><tr><td rowspan=2 colspan=1>Directly above,enterthe name of thecounty where you arefiling the case.</td></tr><tr><td rowspan=5 colspan=2>Plaintiff (First, middle, last name)V.Defendants (First, middle, last name or business name):Central East Asian Cuisine</td></tr><tr><td rowspan=2 colspan=1>Enter your name asPlaintiff.</td></tr><tr><td rowspan=3 colspan=1>Case Number</td></tr><tr><td rowspan=1 colspan=1>Enter the names of all people or businessesyou are suing asDefendants.</td></tr><tr><td rowspan=1 colspan=1>The Circuit Clerk wiladd a Case Number.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "b13095ca00f5a47c1775e07c607fe6d86428c5226bea7d7e763d3c75df8877e7.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 3,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        33,
+                                        43,
+                                        576,
+                                        117.33333333333333
+                                    ],
+                                    "spans": [],
+                                    "index": 2
+                                },
+                                {
+                                    "bbox": [
+                                        33,
+                                        117.33333333333333,
+                                        576,
+                                        191.66666666666666
+                                    ],
+                                    "spans": [],
+                                    "index": 3
+                                },
+                                {
+                                    "bbox": [
+                                        33,
+                                        191.66666666666666,
+                                        576,
+                                        266.0
+                                    ],
+                                    "spans": [],
+                                    "index": 4
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 1.75
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        41,
+                        279,
+                        567,
+                        302
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                39,
+                                279,
+                                564,
+                                293
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        39,
+                                        279,
+                                        564,
+                                        293
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Jury Trial Request by Filing Separate Form. If you want your case decided by a jury instead of a judge, you have to file a Jury Request form.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 5
+                        },
+                        {
+                            "bbox": [
+                                38,
+                                290,
+                                353,
+                                302
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        38,
+                                        290,
+                                        353,
+                                        302
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Jury trials can sometimes be more complicated and an additional fee may be required.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 6
+                        }
+                    ],
+                    "index": 5.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        145,
+                        324,
+                        516,
+                        348
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                143,
+                                324,
+                                516,
+                                338
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        143,
+                                        324,
+                                        223,
+                                        338
+                                    ],
+                                    "score": 1.0,
+                                    "content": "1. I, Zirui Ye",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        434,
+                                        324,
+                                        516,
+                                        337
+                                    ],
+                                    "score": 1.0,
+                                    "content": ", am the Plaintiff.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 7
+                        },
+                        {
+                            "bbox": [
+                                188,
+                                335,
+                                264,
+                                349
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        188,
+                                        335,
+                                        264,
+                                        349
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 8
+                        }
+                    ],
+                    "index": 7.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        143,
+                        371,
+                        580,
+                        420
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                142,
+                                369,
+                                442,
+                                384
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        142,
+                                        371,
+                                        156,
+                                        384
+                                    ],
+                                    "score": 1.0,
+                                    "content": "2.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        166,
+                                        369,
+                                        442,
+                                        384
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendant’s name and address is:  Central East Asia Cuisine",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 9
+                        },
+                        {
+                            "bbox": [
+                                328,
+                                381,
+                                404,
+                                395
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        328,
+                                        381,
+                                        404,
+                                        395
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 10
+                        },
+                        {
+                            "bbox": [
+                                162,
+                                394,
+                                383,
+                                410
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        162,
+                                        394,
+                                        383,
+                                        410
+                                    ],
+                                    "score": 1.0,
+                                    "content": "2353-2355 S Wentworth Ave, Chicago, IL 60616",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 11
+                        },
+                        {
+                            "bbox": [
+                                167,
+                                406,
+                                530,
+                                423
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        408,
+                                        225,
+                                        420
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Street, Unit #",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        354,
+                                        406,
+                                        376,
+                                        423
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        450,
+                                        406,
+                                        477,
+                                        422
+                                    ],
+                                    "score": 1.0,
+                                    "content": "State",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        510,
+                                        406,
+                                        530,
+                                        422
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 12
+                        }
+                    ],
+                    "index": 10.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        164,
+                        432,
+                        578,
+                        456
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                431,
+                                336,
+                                445
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        431,
+                                        336,
+                                        445
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendant #2's name and address is:",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 13
+                        },
+                        {
+                            "bbox": [
+                                343,
+                                442,
+                                420,
+                                457
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        343,
+                                        442,
+                                        420,
+                                        457
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 14
+                        }
+                    ],
+                    "index": 13.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        170,
+                        470,
+                        530,
+                        482
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                468,
+                                532,
+                                487
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        469,
+                                        225,
+                                        483
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Street, Unit #",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        354,
+                                        468,
+                                        376,
+                                        487
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        449,
+                                        469,
+                                        476,
+                                        484
+                                    ],
+                                    "score": 1.0,
+                                    "content": "State",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        510,
+                                        468,
+                                        532,
+                                        484
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 15
+                        }
+                    ],
+                    "index": 15
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        178,
+                        484,
+                        549,
+                        510
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                176,
+                                483,
+                                549,
+                                497
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        176,
+                                        483,
+                                        549,
+                                        497
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have listed additional Defendants on the attached Additional Defendants (Small",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 16
+                        },
+                        {
+                            "bbox": [
+                                189,
+                                498,
+                                299,
+                                511
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        189,
+                                        498,
+                                        299,
+                                        511
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Claims Complaint) form.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 17
+                        }
+                    ],
+                    "index": 16.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        142,
+                        523,
+                        435,
+                        536
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                143,
+                                522,
+                                436,
+                                538
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        143,
+                                        523,
+                                        157,
+                                        536
+                                    ],
+                                    "score": 1.0,
+                                    "content": "3.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        164,
+                                        522,
+                                        321,
+                                        536
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendants owe me $ 5,500.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        362,
+                                        523,
+                                        436,
+                                        538
+                                    ],
+                                    "score": 1.0,
+                                    "content": "and (check one):",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 18
+                        }
+                    ],
+                    "index": 18
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        165,
+                        537,
+                        562,
+                        579
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                537,
+                                412,
+                                550
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        537,
+                                        181,
+                                        550
+                                    ],
+                                    "score": 1.0,
+                                    "content": " ✔",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        187,
+                                        537,
+                                        412,
+                                        550
+                                    ],
+                                    "score": 1.0,
+                                    "content": "a. I have no written agreement with Defendants.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 19
+                        },
+                        {
+                            "bbox": [
+                                168,
+                                551,
+                                486,
+                                565
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        168,
+                                        552,
+                                        181,
+                                        564
+                                    ],
+                                    "score": 1.0,
+                                    "content": "",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        189,
+                                        552,
+                                        201,
+                                        564
+                                    ],
+                                    "score": 1.0,
+                                    "content": "b.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        207,
+                                        551,
+                                        486,
+                                        565
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have a written agreement with Defendants and it is attached.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 20
+                        },
+                        {
+                            "bbox": [
+                                169,
+                                565,
+                                560,
+                                579
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        169,
+                                        566,
+                                        181,
+                                        578
+                                    ],
+                                    "score": 1.0,
+                                    "content": "",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        189,
+                                        567,
+                                        201,
+                                        579
+                                    ],
+                                    "score": 1.0,
+                                    "content": "c.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        207,
+                                        565,
+                                        560,
+                                        579
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have a written agreement with Defendants but I have not attached it because:",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 21
+                        }
+                    ],
+                    "index": 20
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        36,
+                        321,
+                        127,
+                        654
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                36,
+                                321,
+                                127,
+                                654
+                            ],
+                            "group_id": 1,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        321,
+                                        127,
+                                        654
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                36,
+                                                321,
+                                                127,
+                                                654
+                                            ],
+                                            "score": 0.611,
+                                            "html": "<table><tr><td>In 1, enter your name. In 2,enter the name and addressof each</td></tr><tr><td>If you are suing more than 2 Defendants, use the Additional Defendants (Small Claims Complaint) form and attach it. In 3,enter the amount of money</td></tr><tr><td>that is owed to you. It must be $10,000 or less.Do not include court costs.Check 3a, 3b,or 3c.If you have a written agreement,attach that contract or other document as proof of your agreement to thisSmall Claims Complaint, or explain why you</td></tr><tr><td>cannot. In 4,check the box if it applies.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "5ac9850090caacb95f368d9e7f8f655e2d304c13664d4e2d726a4c002db48938.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 22,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        321,
+                                        127,
+                                        654
+                                    ],
+                                    "spans": [],
+                                    "index": 22
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 22
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        144,
+                        627,
+                        554,
+                        655
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                141,
+                                626,
+                                555,
+                                642
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        141,
+                                        626,
+                                        555,
+                                        642
+                                    ],
+                                    "score": 1.0,
+                                    "content": "4.  I have demanded payment of the amount listed in Section 3 and Defendants have ✔",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 23
+                        },
+                        {
+                            "bbox": [
+                                188,
+                                642,
+                                273,
+                                655
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        188,
+                                        642,
+                                        273,
+                                        655
+                                    ],
+                                    "score": 1.0,
+                                    "content": "failed to pay in full.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 24
+                        }
+                    ],
+                    "index": 23.5
+                }
+            ],
+            "page_idx": 0,
+            "page_size": [
+                612,
+                792
+            ],
+            "discarded_blocks": [
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        34,
+                        743,
+                        78,
+                        753
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                34,
+                                743,
+                                79,
+                                754
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        34,
+                                        743,
+                                        79,
+                                        754
+                                    ],
+                                    "score": 1.0,
+                                    "content": "CS-C 702.4",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        549,
+                        743,
+                        576,
+                        754
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                547,
+                                741,
+                                579,
+                                758
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        547,
+                                        741,
+                                        579,
+                                        758
+                                    ],
+                                    "score": 1.0,
+                                    "content": "(06/24)",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        284,
+                        744,
+                        327,
+                        753
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                282,
+                                742,
+                                329,
+                                756
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        282,
+                                        742,
+                                        329,
+                                        756
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Page 1 of 2",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        33,
+                        43,
+                        576,
+                        266
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_caption",
+                            "bbox": [
+                                65,
+                                20,
+                                545,
+                                41
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        67,
+                                        18,
+                                        545,
+                                        34
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                67,
+                                                18,
+                                                545,
+                                                34
+                                            ],
+                                            "score": 1.0,
+                                            "content": "This form is approved by the Illinois Supreme Court and is required to be accepted in all Illinois Circuit Courts.",
+                                            "type": "text"
+                                        }
+                                    ],
+                                    "index": 0
+                                },
+                                {
+                                    "bbox": [
+                                        223,
+                                        28,
+                                        385,
+                                        45
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                223,
+                                                28,
+                                                385,
+                                                45
+                                            ],
+                                            "score": 1.0,
+                                            "content": "Forms are free at ilcourts.info/forms.",
+                                            "type": "text"
+                                        }
+                                    ],
+                                    "index": 1
+                                }
+                            ],
+                            "index": 0.5
+                        },
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                33,
+                                43,
+                                576,
+                                266
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        33,
+                                        43,
+                                        576,
+                                        266
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                33,
+                                                43,
+                                                576,
+                                                266
+                                            ],
+                                            "score": 0.933,
+                                            "html": "<table><tr><td rowspan=1 colspan=2>STATE OF ILLINOIS,CIRCUIT COURTCOUNTY</td><td rowspan=1 colspan=1>SMALL CLAIMS COMPLAINT</td><td rowspan=5 colspan=1>For Court Use Only</td></tr><tr><td rowspan=1 colspan=1>Instructions&lt;</td><td rowspan=2 colspan=2>Zirui Ye</td></tr><tr><td rowspan=2 colspan=1>Directly above,enterthe name of thecounty where you arefiling the case.</td></tr><tr><td rowspan=5 colspan=2>Plaintiff (First, middle, last name)V.Defendants (First, middle, last name or business name):Central East Asian Cuisine</td></tr><tr><td rowspan=2 colspan=1>Enter your name asPlaintiff.</td></tr><tr><td rowspan=3 colspan=1>Case Number</td></tr><tr><td rowspan=1 colspan=1>Enter the names of all people or businessesyou are suing asDefendants.</td></tr><tr><td rowspan=1 colspan=1>The Circuit Clerk wiladd a Case Number.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "b13095ca00f5a47c1775e07c607fe6d86428c5226bea7d7e763d3c75df8877e7.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 3,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        33,
+                                        43,
+                                        576,
+                                        117.33333333333333
+                                    ],
+                                    "spans": [],
+                                    "index": 2
+                                },
+                                {
+                                    "bbox": [
+                                        33,
+                                        117.33333333333333,
+                                        576,
+                                        191.66666666666666
+                                    ],
+                                    "spans": [],
+                                    "index": 3
+                                },
+                                {
+                                    "bbox": [
+                                        33,
+                                        191.66666666666666,
+                                        576,
+                                        266.0
+                                    ],
+                                    "spans": [],
+                                    "index": 4
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 1.75
+                },
+                {
+                    "type": "list",
+                    "bbox": [
+                        41,
+                        279,
+                        567,
+                        302
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                39,
+                                279,
+                                564,
+                                293
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        39,
+                                        279,
+                                        564,
+                                        293
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Jury Trial Request by Filing Separate Form. If you want your case decided by a jury instead of a judge, you have to file a Jury Request form.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 5,
+                            "is_list_end_line": true
+                        },
+                        {
+                            "bbox": [
+                                38,
+                                290,
+                                353,
+                                302
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        38,
+                                        290,
+                                        353,
+                                        302
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Jury trials can sometimes be more complicated and an additional fee may be required.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 6,
+                            "is_list_start_line": true,
+                            "is_list_end_line": true
+                        }
+                    ],
+                    "index": 5.5,
+                    "bbox_fs": [
+                        38,
+                        279,
+                        564,
+                        302
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        145,
+                        324,
+                        516,
+                        348
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                143,
+                                324,
+                                516,
+                                338
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        143,
+                                        324,
+                                        223,
+                                        338
+                                    ],
+                                    "score": 1.0,
+                                    "content": "1. I, Zirui Ye",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        434,
+                                        324,
+                                        516,
+                                        337
+                                    ],
+                                    "score": 1.0,
+                                    "content": ", am the Plaintiff.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 7
+                        },
+                        {
+                            "bbox": [
+                                188,
+                                335,
+                                264,
+                                349
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        188,
+                                        335,
+                                        264,
+                                        349
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 8
+                        }
+                    ],
+                    "index": 7.5,
+                    "bbox_fs": [
+                        143,
+                        324,
+                        516,
+                        349
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        143,
+                        371,
+                        580,
+                        420
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                142,
+                                369,
+                                442,
+                                384
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        142,
+                                        371,
+                                        156,
+                                        384
+                                    ],
+                                    "score": 1.0,
+                                    "content": "2.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        166,
+                                        369,
+                                        442,
+                                        384
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendant’s name and address is:  Central East Asia Cuisine",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 9
+                        },
+                        {
+                            "bbox": [
+                                328,
+                                381,
+                                404,
+                                395
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        328,
+                                        381,
+                                        404,
+                                        395
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 10
+                        },
+                        {
+                            "bbox": [
+                                162,
+                                394,
+                                383,
+                                410
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        162,
+                                        394,
+                                        383,
+                                        410
+                                    ],
+                                    "score": 1.0,
+                                    "content": "2353-2355 S Wentworth Ave, Chicago, IL 60616",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 11
+                        },
+                        {
+                            "bbox": [
+                                167,
+                                406,
+                                530,
+                                423
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        408,
+                                        225,
+                                        420
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Street, Unit #",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        354,
+                                        406,
+                                        376,
+                                        423
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        450,
+                                        406,
+                                        477,
+                                        422
+                                    ],
+                                    "score": 1.0,
+                                    "content": "State",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        510,
+                                        406,
+                                        530,
+                                        422
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 12
+                        }
+                    ],
+                    "index": 10.5,
+                    "bbox_fs": [
+                        142,
+                        369,
+                        530,
+                        423
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        164,
+                        432,
+                        578,
+                        456
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                431,
+                                336,
+                                445
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        431,
+                                        336,
+                                        445
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendant #2's name and address is:",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 13
+                        },
+                        {
+                            "bbox": [
+                                343,
+                                442,
+                                420,
+                                457
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        343,
+                                        442,
+                                        420,
+                                        457
+                                    ],
+                                    "score": 1.0,
+                                    "content": "First, Middle, Last",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 14
+                        }
+                    ],
+                    "index": 13.5,
+                    "bbox_fs": [
+                        167,
+                        431,
+                        420,
+                        457
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        170,
+                        470,
+                        530,
+                        482
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                468,
+                                532,
+                                487
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        469,
+                                        225,
+                                        483
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Street, Unit #",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        354,
+                                        468,
+                                        376,
+                                        487
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        449,
+                                        469,
+                                        476,
+                                        484
+                                    ],
+                                    "score": 1.0,
+                                    "content": "State",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        510,
+                                        468,
+                                        532,
+                                        484
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 15
+                        }
+                    ],
+                    "index": 15,
+                    "bbox_fs": [
+                        167,
+                        468,
+                        532,
+                        487
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        178,
+                        484,
+                        549,
+                        510
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                176,
+                                483,
+                                549,
+                                497
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        176,
+                                        483,
+                                        549,
+                                        497
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have listed additional Defendants on the attached Additional Defendants (Small",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 16
+                        },
+                        {
+                            "bbox": [
+                                189,
+                                498,
+                                299,
+                                511
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        189,
+                                        498,
+                                        299,
+                                        511
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Claims Complaint) form.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 17
+                        }
+                    ],
+                    "index": 16.5,
+                    "bbox_fs": [
+                        176,
+                        483,
+                        549,
+                        511
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        142,
+                        523,
+                        435,
+                        536
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                143,
+                                522,
+                                436,
+                                538
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        143,
+                                        523,
+                                        157,
+                                        536
+                                    ],
+                                    "score": 1.0,
+                                    "content": "3.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        164,
+                                        522,
+                                        321,
+                                        536
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Defendants owe me $ 5,500.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        362,
+                                        523,
+                                        436,
+                                        538
+                                    ],
+                                    "score": 1.0,
+                                    "content": "and (check one):",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 18
+                        }
+                    ],
+                    "index": 18,
+                    "bbox_fs": [
+                        143,
+                        522,
+                        436,
+                        538
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        165,
+                        537,
+                        562,
+                        579
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                167,
+                                537,
+                                412,
+                                550
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        167,
+                                        537,
+                                        181,
+                                        550
+                                    ],
+                                    "score": 1.0,
+                                    "content": " ✔",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        187,
+                                        537,
+                                        412,
+                                        550
+                                    ],
+                                    "score": 1.0,
+                                    "content": "a. I have no written agreement with Defendants.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 19
+                        },
+                        {
+                            "bbox": [
+                                168,
+                                551,
+                                486,
+                                565
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        168,
+                                        552,
+                                        181,
+                                        564
+                                    ],
+                                    "score": 1.0,
+                                    "content": "",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        189,
+                                        552,
+                                        201,
+                                        564
+                                    ],
+                                    "score": 1.0,
+                                    "content": "b.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        207,
+                                        551,
+                                        486,
+                                        565
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have a written agreement with Defendants and it is attached.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 20
+                        },
+                        {
+                            "bbox": [
+                                169,
+                                565,
+                                560,
+                                579
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        169,
+                                        566,
+                                        181,
+                                        578
+                                    ],
+                                    "score": 1.0,
+                                    "content": "",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        189,
+                                        567,
+                                        201,
+                                        579
+                                    ],
+                                    "score": 1.0,
+                                    "content": "c.",
+                                    "type": "text"
+                                },
+                                {
+                                    "bbox": [
+                                        207,
+                                        565,
+                                        560,
+                                        579
+                                    ],
+                                    "score": 1.0,
+                                    "content": "I have a written agreement with Defendants but I have not attached it because:",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 21
+                        }
+                    ],
+                    "index": 20,
+                    "bbox_fs": [
+                        167,
+                        537,
+                        560,
+                        579
+                    ]
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        36,
+                        321,
+                        127,
+                        654
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                36,
+                                321,
+                                127,
+                                654
+                            ],
+                            "group_id": 1,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        321,
+                                        127,
+                                        654
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                36,
+                                                321,
+                                                127,
+                                                654
+                                            ],
+                                            "score": 0.611,
+                                            "html": "<table><tr><td>In 1, enter your name. In 2,enter the name and addressof each</td></tr><tr><td>If you are suing more than 2 Defendants, use the Additional Defendants (Small Claims Complaint) form and attach it. In 3,enter the amount of money</td></tr><tr><td>that is owed to you. It must be $10,000 or less.Do not include court costs.Check 3a, 3b,or 3c.If you have a written agreement,attach that contract or other document as proof of your agreement to thisSmall Claims Complaint, or explain why you</td></tr><tr><td>cannot. In 4,check the box if it applies.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "5ac9850090caacb95f368d9e7f8f655e2d304c13664d4e2d726a4c002db48938.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 22,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        321,
+                                        127,
+                                        654
+                                    ],
+                                    "spans": [],
+                                    "index": 22
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 22
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        144,
+                        627,
+                        554,
+                        655
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                141,
+                                626,
+                                555,
+                                642
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        141,
+                                        626,
+                                        555,
+                                        642
+                                    ],
+                                    "score": 1.0,
+                                    "content": "4.  I have demanded payment of the amount listed in Section 3 and Defendants have ✔",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 23
+                        },
+                        {
+                            "bbox": [
+                                188,
+                                642,
+                                273,
+                                655
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        188,
+                                        642,
+                                        273,
+                                        655
+                                    ],
+                                    "score": 1.0,
+                                    "content": "failed to pay in full.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 24
+                        }
+                    ],
+                    "index": 23.5,
+                    "bbox_fs": [
+                        141,
+                        626,
+                        555,
+                        655
+                    ]
+                }
+            ]
+        },
+        {
+            "preproc_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        36,
+                        50,
+                        128,
+                        165
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                36,
+                                50,
+                                128,
+                                165
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        50,
+                                        128,
+                                        165
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                36,
+                                                50,
+                                                128,
+                                                165
+                                            ],
+                                            "score": 0.928,
+                                            "html": "<table><tr><td>In 5,enter the reasons why Defendant owes this money to you.</td></tr><tr><td>If you need more space,complete the Additional Reasons (Small Claims Complaint) form and</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "2340309f6492e3648e9af7fcdf09ad39815373257512d5dc36aab1e8bef01fb3.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        50,
+                                        128,
+                                        165
+                                    ],
+                                    "spans": [],
+                                    "index": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 0
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        145,
+                        51,
+                        580,
+                        345
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                145,
+                                51,
+                                580,
+                                345
+                            ],
+                            "group_id": 1,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        162,
+                                        51,
+                                        580,
+                                        345
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                162,
+                                                51,
+                                                580,
+                                                345
+                                            ],
+                                            "score": 0.734,
+                                            "html": "<table><tr><td rowspan=1 colspan=1>Defendants owe me this amount of money because:On May 30th,2024,I dined inat this restaurant.Two friends were with me.We ordered Big Plate Whole Chicken. There</td></tr><tr><td rowspan=1 colspan=1>was small bones in this cuisine l cracked one of my teeth immediately.I notified the staff and</td></tr><tr><td rowspan=1 colspan=1>they apologized.I thought it was fine but then the pain increased so much more later that</td></tr><tr><td rowspan=1 colspan=1>day and the second day. I then had to visit my dentist to extract the tooth because the</td></tr><tr><td rowspan=1 colspan=1>dentist did an X-ray showing that the tooth was basically broken.</td></tr><tr><td rowspan=1 colspan=1>July this year l did my dental implant for this missing tooth and it cost around $4500.Iwant</td></tr><tr><td rowspan=1 colspan=1>to sue this restaurant to get compensated for the total cost of my dental treatment as well</td></tr><tr><td rowspan=1 colspan=1>as emotional stress. Thus, I demand a total amount of $5500.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "4bfe1056cea92697a6fc9b872024eb5441bb7562cfcef89ecc2ceb98e3e27f69.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 2,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        145,
+                                        51,
+                                        580,
+                                        149.0
+                                    ],
+                                    "spans": [],
+                                    "index": 1
+                                },
+                                {
+                                    "bbox": [
+                                        145,
+                                        149.0,
+                                        580,
+                                        247.0
+                                    ],
+                                    "spans": [],
+                                    "index": 2
+                                },
+                                {
+                                    "bbox": [
+                                        145,
+                                        247.0,
+                                        580,
+                                        345.0
+                                    ],
+                                    "spans": [],
+                                    "index": 3
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 2
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        37,
+                        363,
+                        128,
+                        640
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                37,
+                                363,
+                                128,
+                                640
+                            ],
+                            "group_id": 2,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        37,
+                                        363,
+                                        128,
+                                        640
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                37,
+                                                363,
+                                                128,
+                                                640
+                                            ],
+                                            "score": 0.354,
+                                            "html": "<table><tr><td>Under Illinois Supreme Court Rule 137, your signature means that you have read the document, that to the best of your belief, it is true and correct and that you are not filing it for an improper purpose, such as to</td></tr><tr><td>cause delay. If you are completing this form on a computer, sign your name by typing it. If you are completing it by hand, sign and print your name.</td></tr><tr><td>Enter your complete address,telephone number and email address,if youhave</td></tr><tr><td>one. GETTINGCOURTD</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "5f0a1157bea30bd0b933bedeff6d5cfe31e9dd115287da33219249a579b207be.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 4,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        37,
+                                        363,
+                                        128,
+                                        640
+                                    ],
+                                    "spans": [],
+                                    "index": 4
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 4
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        355,
+                        469,
+                        577,
+                        492
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                354,
+                                468,
+                                443,
+                                482
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        354,
+                                        468,
+                                        443,
+                                        482
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Chicago, IL, 60611",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 5
+                        },
+                        {
+                            "bbox": [
+                                359,
+                                480,
+                                425,
+                                493
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        359,
+                                        480,
+                                        425,
+                                        493
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City, State, ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 6
+                        }
+                    ],
+                    "index": 5.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        355,
+                        513,
+                        578,
+                        535
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                356,
+                                513,
+                                505,
+                                525
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        356,
+                                        513,
+                                        505,
+                                        525
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ziruiye2022@u.northwestern.edu",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 7
+                        },
+                        {
+                            "bbox": [
+                                360,
+                                524,
+                                422,
+                                535
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        360,
+                                        524,
+                                        422,
+                                        535
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Email Address",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 8
+                        }
+                    ],
+                    "index": 7.5
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        41,
+                        630,
+                        568,
+                        652
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                41,
+                                628,
+                                565,
+                                642
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        41,
+                                        628,
+                                        565,
+                                        642
+                                    ],
+                                    "score": 1.0,
+                                    "content": "GETTING COURT DOCUMENTS BY EMAIL: You should use an email account that you do not share with anyone else and that you check",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 9
+                        },
+                        {
+                            "bbox": [
+                                41,
+                                640,
+                                569,
+                                653
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        41,
+                                        640,
+                                        569,
+                                        653
+                                    ],
+                                    "score": 1.0,
+                                    "content": "every day. If you do not check your email every day, you may miss important information, notice of court dates, or documents from other parties.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 10
+                        }
+                    ],
+                    "index": 9.5
+                }
+            ],
+            "page_idx": 1,
+            "page_size": [
+                612,
+                792
+            ],
+            "discarded_blocks": [
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        284,
+                        744,
+                        327,
+                        753
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                282,
+                                742,
+                                329,
+                                756
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        282,
+                                        742,
+                                        329,
+                                        756
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Page 2 of 2",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        30,
+                        744,
+                        73,
+                        753
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                29,
+                                743,
+                                74,
+                                754
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        29,
+                                        743,
+                                        74,
+                                        754
+                                    ],
+                                    "score": 1.0,
+                                    "content": "CS-C 702.4",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        556,
+                        743,
+                        582,
+                        754
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                553,
+                                741,
+                                585,
+                                758
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        553,
+                                        741,
+                                        585,
+                                        758
+                                    ],
+                                    "score": 1.0,
+                                    "content": "(06/24)",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        250,
+                        20,
+                        576,
+                        31
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                250,
+                                20,
+                                430,
+                                32
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        250,
+                                        20,
+                                        430,
+                                        32
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Enter the Case Number given by the Circuit Clerk:",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "discarded",
+                    "bbox": [
+                        169,
+                        340,
+                        502,
+                        353
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                168,
+                                337,
+                                502,
+                                355
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        168,
+                                        337,
+                                        502,
+                                        355
+                                    ],
+                                    "score": 1.0,
+                                    "content": " I have attached an Additional Reasons (Small Claims Complaint) form.",
+                                    "type": "text"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "para_blocks": [
+                {
+                    "type": "table",
+                    "bbox": [
+                        36,
+                        50,
+                        128,
+                        165
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                36,
+                                50,
+                                128,
+                                165
+                            ],
+                            "group_id": 0,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        50,
+                                        128,
+                                        165
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                36,
+                                                50,
+                                                128,
+                                                165
+                                            ],
+                                            "score": 0.928,
+                                            "html": "<table><tr><td>In 5,enter the reasons why Defendant owes this money to you.</td></tr><tr><td>If you need more space,complete the Additional Reasons (Small Claims Complaint) form and</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "2340309f6492e3648e9af7fcdf09ad39815373257512d5dc36aab1e8bef01fb3.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 0,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        36,
+                                        50,
+                                        128,
+                                        165
+                                    ],
+                                    "spans": [],
+                                    "index": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 0
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        145,
+                        51,
+                        580,
+                        345
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                145,
+                                51,
+                                580,
+                                345
+                            ],
+                            "group_id": 1,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        162,
+                                        51,
+                                        580,
+                                        345
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                162,
+                                                51,
+                                                580,
+                                                345
+                                            ],
+                                            "score": 0.734,
+                                            "html": "<table><tr><td rowspan=1 colspan=1>Defendants owe me this amount of money because:On May 30th,2024,I dined inat this restaurant.Two friends were with me.We ordered Big Plate Whole Chicken. There</td></tr><tr><td rowspan=1 colspan=1>was small bones in this cuisine l cracked one of my teeth immediately.I notified the staff and</td></tr><tr><td rowspan=1 colspan=1>they apologized.I thought it was fine but then the pain increased so much more later that</td></tr><tr><td rowspan=1 colspan=1>day and the second day. I then had to visit my dentist to extract the tooth because the</td></tr><tr><td rowspan=1 colspan=1>dentist did an X-ray showing that the tooth was basically broken.</td></tr><tr><td rowspan=1 colspan=1>July this year l did my dental implant for this missing tooth and it cost around $4500.Iwant</td></tr><tr><td rowspan=1 colspan=1>to sue this restaurant to get compensated for the total cost of my dental treatment as well</td></tr><tr><td rowspan=1 colspan=1>as emotional stress. Thus, I demand a total amount of $5500.</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "4bfe1056cea92697a6fc9b872024eb5441bb7562cfcef89ecc2ceb98e3e27f69.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 2,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        145,
+                                        51,
+                                        580,
+                                        149.0
+                                    ],
+                                    "spans": [],
+                                    "index": 1
+                                },
+                                {
+                                    "bbox": [
+                                        145,
+                                        149.0,
+                                        580,
+                                        247.0
+                                    ],
+                                    "spans": [],
+                                    "index": 2
+                                },
+                                {
+                                    "bbox": [
+                                        145,
+                                        247.0,
+                                        580,
+                                        345.0
+                                    ],
+                                    "spans": [],
+                                    "index": 3
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 2
+                },
+                {
+                    "type": "table",
+                    "bbox": [
+                        37,
+                        363,
+                        128,
+                        640
+                    ],
+                    "blocks": [
+                        {
+                            "type": "table_body",
+                            "bbox": [
+                                37,
+                                363,
+                                128,
+                                640
+                            ],
+                            "group_id": 2,
+                            "lines": [
+                                {
+                                    "bbox": [
+                                        37,
+                                        363,
+                                        128,
+                                        640
+                                    ],
+                                    "spans": [
+                                        {
+                                            "bbox": [
+                                                37,
+                                                363,
+                                                128,
+                                                640
+                                            ],
+                                            "score": 0.354,
+                                            "html": "<table><tr><td>Under Illinois Supreme Court Rule 137, your signature means that you have read the document, that to the best of your belief, it is true and correct and that you are not filing it for an improper purpose, such as to</td></tr><tr><td>cause delay. If you are completing this form on a computer, sign your name by typing it. If you are completing it by hand, sign and print your name.</td></tr><tr><td>Enter your complete address,telephone number and email address,if youhave</td></tr><tr><td>one. GETTINGCOURTD</td></tr></table>",
+                                            "type": "table",
+                                            "image_path": "5f0a1157bea30bd0b933bedeff6d5cfe31e9dd115287da33219249a579b207be.jpg"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "index": 4,
+                            "virtual_lines": [
+                                {
+                                    "bbox": [
+                                        37,
+                                        363,
+                                        128,
+                                        640
+                                    ],
+                                    "spans": [],
+                                    "index": 4
+                                }
+                            ]
+                        }
+                    ],
+                    "index": 4
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        355,
+                        469,
+                        577,
+                        492
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                354,
+                                468,
+                                443,
+                                482
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        354,
+                                        468,
+                                        443,
+                                        482
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Chicago, IL, 60611",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 5
+                        },
+                        {
+                            "bbox": [
+                                359,
+                                480,
+                                425,
+                                493
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        359,
+                                        480,
+                                        425,
+                                        493
+                                    ],
+                                    "score": 1.0,
+                                    "content": "City, State, ZIP",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 6
+                        }
+                    ],
+                    "index": 5.5,
+                    "bbox_fs": [
+                        354,
+                        468,
+                        443,
+                        493
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        355,
+                        513,
+                        578,
+                        535
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                356,
+                                513,
+                                505,
+                                525
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        356,
+                                        513,
+                                        505,
+                                        525
+                                    ],
+                                    "score": 1.0,
+                                    "content": "ziruiye2022@u.northwestern.edu",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 7
+                        },
+                        {
+                            "bbox": [
+                                360,
+                                524,
+                                422,
+                                535
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        360,
+                                        524,
+                                        422,
+                                        535
+                                    ],
+                                    "score": 1.0,
+                                    "content": "Email Address",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 8
+                        }
+                    ],
+                    "index": 7.5,
+                    "bbox_fs": [
+                        356,
+                        513,
+                        505,
+                        535
+                    ]
+                },
+                {
+                    "type": "text",
+                    "bbox": [
+                        41,
+                        630,
+                        568,
+                        652
+                    ],
+                    "lines": [
+                        {
+                            "bbox": [
+                                41,
+                                628,
+                                565,
+                                642
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        41,
+                                        628,
+                                        565,
+                                        642
+                                    ],
+                                    "score": 1.0,
+                                    "content": "GETTING COURT DOCUMENTS BY EMAIL: You should use an email account that you do not share with anyone else and that you check",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 9
+                        },
+                        {
+                            "bbox": [
+                                41,
+                                640,
+                                569,
+                                653
+                            ],
+                            "spans": [
+                                {
+                                    "bbox": [
+                                        41,
+                                        640,
+                                        569,
+                                        653
+                                    ],
+                                    "score": 1.0,
+                                    "content": "every day. If you do not check your email every day, you may miss important information, notice of court dates, or documents from other parties.",
+                                    "type": "text"
+                                }
+                            ],
+                            "index": 10
+                        }
+                    ],
+                    "index": 9.5,
+                    "bbox_fs": [
+                        41,
+                        628,
+                        569,
+                        653
+                    ]
+                }
+            ]
+        }
+    ],
+    "_backend": "pipeline",
+    "_version_name": "2.6.8"
+}

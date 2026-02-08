@@ -1,0 +1,24 @@
+{
+    "case_number": null,
+    "case_type": "Small Claims",
+    "state": "IL",
+    "filing_date": null,
+    "hearing_date": null,
+    "plaintiffs": [
+        {
+            "name": "Zirui Ye",
+            "address": "545 N McClurg Court, Chicago, IL, 60611"
+        }
+    ],
+    "defendants": [
+        {
+            "name": "Central East Asian Cuisine",
+            "address": "2353-2355 S Wentworth Ave, Chicago, IL, 60616"
+        }
+    ],
+    "claim_summary": "Plaintiff claims damages related to a dental injury incurred while dining at the restaurant, resulting in costs for dental treatment and emotional stress.",
+    "amount_sought": 5500,
+    "incident_date": "2024-05-30",
+    "demand_letter_sent": true,
+    "agreement_included": false
+}

@@ -1,0 +1,25 @@
+{
+    "case_number": null,
+    "case_type": "Contract Dispute",
+    "state": "IL",
+    "county": "Cook",
+    "filing_date": null,
+    "hearing_date": null,
+    "plaintiffs": [
+        {
+            "name": "John Doe",
+            "address": "123 Main St, Chicago, IL 60601"
+        }
+    ],
+    "defendants": [
+        {
+            "name": "ACME Corp",
+            "address": "456 Business Ave, Chicago, IL 60602"
+        }
+    ],
+    "claim_summary": "Defendant failed to deliver services as promised in the contract. Paid $3000 for website development that was never completed.",
+    "amount_sought": 3000.0,
+    "incident_date": null,
+    "demand_letter_sent": true,
+    "agreement_included": false
+}

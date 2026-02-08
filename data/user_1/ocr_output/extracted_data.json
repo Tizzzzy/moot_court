@@ -1,0 +1,23 @@
+{
+    "case_number": null,
+    "case_type": "Small Claims",
+    "state": "Illinois",
+    "filing_date": null,
+    "plaintiffs": [
+        {
+            "name": "Zirui Ye",
+            "address": null
+        }
+    ],
+    "defendants": [
+        {
+            "name": "Central East Asian Cuisine",
+            "address": "2353-2355 S Wentworth Ave, Chicago, IL 60616"
+        }
+    ],
+    "claim_summary": "On May 30th, 2024, the plaintiff dined at Central East Asian Cuisine and consumed a Big Plate Whole Chicken that contained small bones, which cracked one of her teeth. The staff apologized, but the pain worsened, leading her to visit a dentist who extracted the tooth. A dental implant was later performed, costing approximately $4500. The plaintiff is seeking compensation for the total cost of dental treatment and emotional stress, totaling $5500.",
+    "amount_sought": 5500,
+    "incident_date": "2024-05-30",
+    "demand_letter_sent": true,
+    "agreement_included": false
+}
