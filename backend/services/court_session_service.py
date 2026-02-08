@@ -71,7 +71,7 @@ class CourtSessionService:
             user_id=user_id,
             case_id=case_id,
             status="active",
-            current_speaker="Defendant",  # After Judge opens, next is Defendant or Plaintiff
+            current_speaker="Plaintiff",  # After Judge opens, Plaintiff presents case first
             turn_number=1,
             evidence_upload_allowed=False,
             state_snapshot=self._serialize_session(court_session),
