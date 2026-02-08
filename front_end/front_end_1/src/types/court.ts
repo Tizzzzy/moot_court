@@ -183,6 +183,7 @@ export interface CourtSessionState {
   currentSpeaker: string;
   turnNumber: number;
   evidenceUploadAllowed: boolean;
+  verdictIssued: boolean;
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;

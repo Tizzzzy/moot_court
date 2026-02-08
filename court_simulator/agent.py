@@ -1,13 +1,8 @@
-import google.generativeai as genai
+from google import genai
 import json
 import os
-import base64
-import requests
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
-import logging
-
-logger = logging.getLogger(__name__)
 
 class PlaintiffFeedback(BaseModel):
     """Structured feedback for plaintiff statement"""
@@ -18,7 +13,7 @@ class ObjectionDecision(BaseModel):
     """Defendant's evaluation of plaintiff statement for objections"""
     has_objection: bool = Field(description="True if this statement raises a valid objection")
     objection_type: Optional[str] = Field(description="Type: Hearsay, Speculation, Relevance, Foundation, Narrative, etc.", default=None)
-    legal_reasoning: Optional[str] = Field(description="Legal/procedural basis for the objection", default=None)
+    legal_reasoning: str = Field(description="Legal/procedural basis for the objection")
     suggested_rephrasing: Optional[str] = Field(description="How plaintiff should rephrase to avoid objection", default=None)
     severity: Literal['minor', 'moderate', 'severe'] = Field(default='moderate', description="Severity level of the objection")
 
@@ -39,49 +34,10 @@ class CourtroomResponse(BaseModel):
     evidence_request: Optional[EvidenceRequest] = Field(description="Judge's evidence request, if any", default=None)
 
 class CourtroomAgents:
-    def __init__(self, api_key: str = None):
-        # Use Gemini API via REST (works with any Python version)
-        # Priority: passed api_key > env var > .env file > hardcoded fallback
-        self.gemini_key = api_key
-        if not self.gemini_key:
-            self.gemini_key = os.getenv("GEMINI_API_KEY")
-        if not self.gemini_key:
-            env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-            if os.path.exists(env_path):
-                with open(env_path, "r") as f:
-                    for line in f:
-                        if line.startswith("GEMINI_API_KEY="):
-                            self.gemini_key = line.strip().split("=", 1)[1]
-                            break
-        if not self.gemini_key:
-            # Fallback to hardcoded key
-            self.gemini_key = 'AIzaSyDidgcddZDzZS59zPv4f8ztU_Bd7DyrDss'
-
-        # Use Gemini REST API directly for compatibility
-        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-        logger.info("CourtroomAgents initialized with Gemini 2.0 Flash API (REST)")
-
-    def _generate_content(self, prompt: str) -> str:
-        """Call Gemini API via REST."""
-        headers = {"Content-Type": "application/json"}
-        data = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.7,
-                "maxOutputTokens": 2048,
-            }
-        }
-
-        url = f"{self.api_url}?key={self.gemini_key}"
-        response = requests.post(url, headers=headers, json=data, timeout=60)
-
-        if response.status_code != 200:
-            logger.error(f"Gemini API error: {response.status_code} - {response.text}")
-            raise Exception(f"Gemini API error: {response.status_code}")
-
-        result = response.json()
-        content = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-        return content.strip()
+    def __init__(self, api_key):
+        # Initializing with requested version and model
+        self.client = genai.Client(api_key=api_key, http_options={'api_version': 'v1alpha'})
+        self.model_id = "gemini-3-flash-preview"
 
     def evaluate_for_objection(
         self,
@@ -119,23 +75,24 @@ class CourtroomAgents:
         - Be strategic: not every minor issue warrants objection
         - If statement is acceptable, set has_objection to false
 
-        Return a structured ObjectionDecision JSON with all required fields.
+        Return a structured ObjectionDecision with all required fields.
         """
 
-        prompt_text = f"{system_instruction}\n\nRecent Trial History:\n{history_context}\n\nReturn ONLY valid JSON, nothing else."
+        prompt_text = f"{system_instruction}\n\nRecent Trial History:\n{history_context}"
+        contents = [prompt_text]
 
         try:
-            content = self._generate_content(prompt_text)
-            # Clean markdown code blocks if present
-            if content.startswith("```"):
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
-            logger.info(f"Objection evaluation response: {content[:200]}")
-            return ObjectionDecision.model_validate_json(content)
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=contents,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": ObjectionDecision.model_json_schema(),
+                },
+            )
+            return ObjectionDecision.model_validate_json(response.text)
         except Exception as e:
-            logger.error(f"Objection evaluation error: {e}")
+            print(f"Objection evaluation error: {e}")
             # Fallback: no objection
             return ObjectionDecision(
                 has_objection=False,
@@ -177,17 +134,18 @@ Return ONLY valid JSON, nothing else.
         prompt = f"{system_instruction}\n\nRecent Trial Context:\n{history_context}"
 
         try:
-            content = self._generate_content(prompt)
-            # Clean markdown code blocks if present
-            if content.startswith("```"):
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
-            logger.info(f"Feedback response: {content[:200]}")
-            return PlaintiffFeedback.model_validate_json(content)
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    "temperature": 0.7,
+                    "response_mime_type": "application/json",
+                    "response_json_schema": PlaintiffFeedback.model_json_schema(),
+                }
+            )
+            return PlaintiffFeedback.model_validate_json(response.text)
         except Exception as e:
-            logger.error(f"Feedback generation error: {e}")
+            print(f"Feedback generation error: {e}")
             # Return fallback feedback
             return PlaintiffFeedback(
                 did_well="You stated your position clearly.",
@@ -228,20 +186,21 @@ EDUCATIONAL CONTEXT:
 - Be realistic: only flag severe legitimate objection opportunities
 - If statement is legally sound, set has_objection to false
 
-Return structured ObjectionDecision JSON with educational reasoning.
+Return structured ObjectionDecision with educational reasoning.
 """
 
-        prompt_text = f"{system_instruction}\n\nRecent Trial History:\n{history_context}\n\nReturn ONLY valid JSON, nothing else."
+        prompt_text = f"{system_instruction}\n\nRecent Trial History:\n{history_context}"
 
         try:
-            content = self._generate_content(prompt_text)
-            # Clean markdown code blocks if present
-            if content.startswith("```"):
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
-            return ObjectionDecision.model_validate_json(content)
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt_text,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": ObjectionDecision.model_json_schema(),
+                },
+            )
+            return ObjectionDecision.model_validate_json(response.text)
         except Exception as e:
             # Silent failure - educational feature only
             return ObjectionDecision(
@@ -249,128 +208,53 @@ Return structured ObjectionDecision JSON with educational reasoning.
                 legal_reasoning="Educational analysis unavailable"
             )
 
-    def get_controller_decision(self, history, turn_number: int = 0) -> ControllerDecision:
+    def get_controller_decision(self, history) -> ControllerDecision:
         """
         Determines the next speaker using structured JSON output.
         Returns a ControllerDecision object with only next_speaker.
-
-        Args:
-            history: Conversation history
-            turn_number: Current turn number (used to enforce minimum turns before verdict)
         """
-        # Check if verdict has already been issued - if so, trial is OVER
-        for entry in history:
-            role = entry.get("role", "")
-            content = entry.get("content", "").lower()
-            # If Verdict role was already assigned or Judge gave a final ruling
-            if role == "Verdict":
-                return ControllerDecision(next_speaker="Verdict")
-            # Check if Judge's dialogue contains verdict language
-            if role == "Judge" and any(phrase in content for phrase in [
-                "i rule in favor",
-                "i find in favor",
-                "i award",
-                "judgment for",
-                "the court rules",
-                "verdict is",
-                "case dismissed",
-                "judgment is entered",
-                "i hereby order",
-                "plaintiff is awarded",
-                "defendant is awarded"
-            ]):
-                return ControllerDecision(next_speaker="Verdict")
-
         # Simplify context for the token limit
         context = json.dumps(history[-10:]) if len(history) > 10 else json.dumps(history)
 
-        # Count how many times each party has spoken
-        plaintiff_turns = sum(1 for h in history if h.get("role") == "Plaintiff")
-        defendant_turns = sum(1 for h in history if h.get("role") == "Defendant")
-        judge_turns = sum(1 for h in history if h.get("role") == "Judge")
+        # Get last speaker to enforce strict turn-taking
+        last_speaker = history[-1]['role'] if history else None
 
         prompt = f"""
-        You are the Court Clerk. Review the trial history and decide who speaks next.
+        You are the Court Clerk managing speaker order in a small claims trial.
 
-        History: {context}
+        Last speaker: {last_speaker}
+        Recent history (last 10 exchanges): {context}
 
-        CURRENT STATISTICS:
-        - Turn number: {turn_number}
-        - Plaintiff has spoken: {plaintiff_turns} times
-        - Defendant has spoken: {defendant_turns} times
-        - Judge has spoken: {judge_turns} times
+        STRICT TURN-TAKING RULES:
+        1. After Plaintiff speaks → MUST be Judge or Defendant (NEVER Plaintiff again)
+        2. After Defendant speaks → MUST be Judge or Plaintiff
+        3. After Judge speaks → Can be Plaintiff, Defendant, or Verdict (if ready)
+        4. If trial history is empty → Judge opens court
+        5. If Judge has sufficient evidence and both sides presented → Verdict
 
-        STRICT RULES (in order of priority):
+        CRITICAL: You CANNOT return "Plaintiff" if the last speaker was "Plaintiff"!
 
-        1. MINIMUM REQUIREMENTS FOR VERDICT:
-           - Verdict can ONLY be selected if ALL of these are true:
-             * Turn number >= 6 (at least 6 exchanges)
-             * Plaintiff has spoken at least 2 times
-             * Defendant has spoken at least 1 time
-             * Judge has asked about or received evidence
-           - If these conditions are NOT met, you CANNOT select Verdict
-
-        2. TURN SEQUENCE:
-           - If history is empty, 'Judge' starts with opening statement
-           - If Judge just spoke:
-             * If Judge asked Plaintiff a question → 'Plaintiff'
-             * If Judge asked Defendant a question → 'Defendant'
-             * If Judge made a general statement → 'Plaintiff' (give them chance to speak)
-           - If Plaintiff just spoke:
-             * 'Defendant' gets chance to respond/rebut
-           - If Defendant just spoke:
-             * 'Judge' responds (ask questions, request evidence, or continue proceedings)
-
-        3. ENSURE FAIR HEARING:
-           - Both parties must have equal opportunity to present their case
-           - Judge should ask clarifying questions before verdict
-           - Evidence should be requested and reviewed before verdict
-
-        4. ONLY SELECT VERDICT WHEN:
-           - All minimum requirements met (see rule 1)
-           - Both parties have fully presented their cases
-           - Judge has reviewed all evidence
-           - No more clarifying questions needed
-
-        Return only the next_speaker field as JSON: {{"next_speaker": "Judge|Defendant|Plaintiff|Verdict"}}
+        Based on the conversation flow, who should speak next?
+        Return ONLY valid JSON with next_speaker field.
         """
 
         try:
-            raw_content = self._generate_content(prompt)
-            # Clean markdown code blocks if present
-            if raw_content.startswith("```"):
-                raw_content = raw_content.split("```")[1]
-                if raw_content.startswith("json"):
-                    raw_content = raw_content[4:]
-                raw_content = raw_content.strip()
-            logger.info(f"[Controller] Raw response: {raw_content}")
-            decision = ControllerDecision.model_validate_json(raw_content)
-            logger.info(f"[Controller] Decided next speaker: {decision.next_speaker}")
-
-            # Extra safety: enforce minimum turns before verdict
-            if decision.next_speaker == "Verdict":
-                if turn_number < 6 or plaintiff_turns < 2 or defendant_turns < 1:
-                    # Force continuation - alternate between Plaintiff and Judge
-                    last_speaker = history[-1].get("role") if history else None
-                    if last_speaker == "Plaintiff":
-                        return ControllerDecision(next_speaker="Defendant")
-                    elif last_speaker == "Defendant":
-                        return ControllerDecision(next_speaker="Judge")
-                    else:
-                        return ControllerDecision(next_speaker="Plaintiff")
-
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": ControllerDecision.model_json_schema(),
+                },
+            )
+            # Validate and parse JSON automatically
+            decision = ControllerDecision.model_validate_json(response.text)
             return decision
 
         except Exception as e:
-            logger.error(f"Controller JSON Error: {e}")
-            # Fallback: determine based on last speaker
-            if history:
-                last_speaker = history[-1].get("role")
-                if last_speaker == "Plaintiff":
-                    return ControllerDecision(next_speaker="Defendant")
-                elif last_speaker == "Defendant":
-                    return ControllerDecision(next_speaker="Judge")
-            return ControllerDecision(next_speaker="Plaintiff")
+            print(f"Controller JSON Error: {e}")
+            # Fallback safe object
+            return ControllerDecision(next_speaker="Judge")
 
     def get_role_response(
         self,
@@ -390,6 +274,7 @@ Return structured ObjectionDecision JSON with educational reasoning.
             evidence_paths: List of file paths to evidence files
             evidence_upload_allowed: Whether evidence upload is currently allowed
         """
+        # case_context = json.dumps(case_data)
         history_context = json.dumps(history)
 
         if role == "Judge":
@@ -407,30 +292,15 @@ Return structured ObjectionDecision JSON with educational reasoning.
             EVIDENCE MANAGEMENT:
             {evidence_status}
 
-            COURT PROCEDURE - FOLLOW THIS ORDER:
-            1. OPENING (Turn 1): Introduce yourself, explain the process, ask plaintiff to state their claim
-            2. PLAINTIFF TESTIMONY (Turns 2-4): Listen to plaintiff, ask clarifying questions
-            3. REQUEST EVIDENCE: Ask plaintiff to provide documentary evidence
-               - Set evidence_request.requesting_evidence = true
-               - List specific evidence_types needed (e.g., ["invoice", "photos", "contract"])
-            4. DEFENDANT RESPONSE (Turns 5-7): Let defendant respond, challenge evidence
-            5. REBUTTAL: Allow plaintiff to respond to defendant's arguments
-            6. FINAL QUESTIONS: Ask any remaining questions for clarity
-            7. VERDICT (Turn 8+): Only after thorough review, issue a detailed ruling
+            To request evidence from plaintiff:
+            1. Explicitly ask: "Please provide [specific evidence]"
+            2. Include evidence_request with requesting_evidence = true
+            3. List specific evidence_types needed
 
-            IMPORTANT RULES:
-            - DO NOT rush to verdict - conduct a proper hearing first
-            - Ask at least 2-3 clarifying questions before considering verdict
-            - Let both parties speak and respond to each other
-            - Review all evidence before making a decision
-            - When requesting evidence, set evidence_request.requesting_evidence = true
-            - Keep responses to 2-3 sentences unless giving verdict
-            - Be professional, fair, and impartial
+            When verdict time comes, set evidence_request = null and provide a detailed verdict with dollar amount.
 
-            VERDICT FORMAT (only when ready):
-            "After reviewing all evidence and testimony, I find in favor of [party].
-            [Detailed reasoning]. The defendant is ordered to pay $[amount]."
-            Set evidence_request = null when giving verdict.
+            Goal: Determine truth, verify claim, ask clarifying questions, review evidence carefully.
+            Be professional and fair. Keep responses to 2-3 sentences unless giving verdict.
             """
 
             if evidence_paths:
@@ -446,30 +316,18 @@ Reference specific evidence by filename when discussing it.
             You are Defense Counsel for: {case_data['defendants'][0]['name']}.
             Sued for: ${case_data['amount_sought']}.
             Case: {case_data['claim_summary']}
-
-            YOUR ROLE:
-            - Defend your client against the plaintiff's claims
-            - Deny liability where appropriate
-            - Point out gaps in plaintiff's evidence
-            - Present counter-arguments and alternative explanations
-            - Be polite but firm - this is a legal proceeding
-
-            IMPORTANT:
-            - Wait for the Judge to give you permission to speak
-            - Address the Judge respectfully (e.g., "Your Honor...")
-            - Respond to specific claims made by the plaintiff
-            - Keep responses to 2-3 sentences
-            - If the Judge has issued a verdict, do NOT speak - the trial is over
+            Goal: Defend client. Deny liability, point out evidence gaps, argue assumption of risk.
+            Polite but firm. Concise (2-3 sentences).
             """
 
             if evidence_paths:
                 system_instruction += f"""
 
-PLAINTIFF'S EVIDENCE ({len(evidence_paths)} file(s)):
-Review and challenge the credibility of submitted evidence.
-Point out inconsistencies, missing documentation, or insufficient proof.
+EVIDENCE AVAILABLE:
+{len(evidence_paths)} evidence file(s) submitted by plaintiff.
+Challenge evidence credibility, point out inconsistencies, or argue insufficient proof.
 """
-
+        
         elif role == "Verdict":
             return CourtroomResponse(
                 role="Verdict",
@@ -483,21 +341,10 @@ Point out inconsistencies, missing documentation, or insufficient proof.
             )
 
         # Prepare Content
-        prompt_text = f"""{system_instruction}
+        prompt_text = f"{system_instruction}\n\nTrial History:\n{history_context}\n\nGenerate the response for {role}."
+        contents = [prompt_text]
 
-Trial History:
-{history_context}
-
-Generate the response for {role}. Return ONLY a JSON object with EXACTLY these fields (no markdown, no code blocks):
-{{
-  "role": "{role}",
-  "dialogue": "Your spoken response here",
-  "inner_thought": "Your internal reasoning (optional, can be null)",
-  "citations": null,
-  "evidence_request": {{"requesting_evidence": false, "evidence_types": [], "urgency": "optional"}} or null
-}}"""
-
-        # Add evidence context
+        # Add evidence context and upload files directly from stored paths
         if evidence_paths:
             evidence_summary = f"\n\nPLAINTIFF SUBMITTED EVIDENCE ({len(evidence_paths)} file(s)):"
             for filepath in evidence_paths:
@@ -510,41 +357,29 @@ Generate the response for {role}. Return ONLY a JSON object with EXACTLY these f
                     '.png': 'image/png'
                 }.get(ext, 'unknown')
                 evidence_summary += f"\n- {filename}: {mime_type}"
-            prompt_text += evidence_summary
+            contents[0] = prompt_text + evidence_summary
+
+            # Upload directly from stored paths (no temp files)
+            for filepath in evidence_paths:
+                try:
+                    uploaded_file = self.client.files.upload(file=filepath)
+                    contents.append(uploaded_file)
+                except Exception as e:
+                    print(f"Upload failed for {os.path.basename(filepath)}: {e}")
 
         try:
-            # Use REST API for text generation
-            content = self._generate_content(prompt_text)
-
-            # Clean markdown code blocks if present
-            if content.startswith("```"):
-                content = content.split("```")[1]
-                if content.startswith("json"):
-                    content = content[4:]
-                content = content.strip()
-
-            logger.info(f"[{role}] Response: {content[:300]}...")
-
-            try:
-                return CourtroomResponse.model_validate_json(content)
-            except Exception as parse_error:
-                logger.warning(f"Parse error, trying to fix: {parse_error}")
-                # Try to extract dialogue from nested response
-                data = json.loads(content)
-                if "response" in data:
-                    data = data["response"]
-                if "text" in data and "dialogue" not in data:
-                    data["dialogue"] = data["text"]
-                if "role" not in data:
-                    data["role"] = role
-                # Fix invalid urgency values
-                if "evidence_request" in data and data["evidence_request"]:
-                    if data["evidence_request"].get("urgency") not in ["required", "optional"]:
-                        data["evidence_request"]["urgency"] = "optional"
-                return CourtroomResponse(**data)
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=contents,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": CourtroomResponse.model_json_schema(),
+                },
+            )
+            return CourtroomResponse.model_validate_json(response.text)
 
         except Exception as e:
-            logger.error(f"{role} response generation error: {e}")
+            print(f"{role} response generation error: {e}")
             # Return an error object formatted correctly
             return CourtroomResponse(
                 role=role,

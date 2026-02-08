@@ -24,6 +24,7 @@ interface ActiveHearingProps {
   editingMessage?: string;
   caseData?: CaseData | null;
   evidenceUploadAllowed?: boolean;
+  verdictIssued?: boolean;
 }
 
 const stepTitles: Record<HearingStep, string> = {
@@ -74,7 +75,8 @@ export function ActiveHearing({
   onEditMessage,
   editingMessage,
   caseData,
-  evidenceUploadAllowed
+  evidenceUploadAllowed,
+  verdictIssued
 }: ActiveHearingProps) {
   const progress = (currentStep / 7) * 100;
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -247,6 +249,7 @@ export function ActiveHearing({
       {/* Chat Input */}
       <ChatInput
         onSend={onSendMessage}
+        disabled={verdictIssued}
         evidenceCount={evidenceCount}
         onViewEvidence={onViewEvidence}
         hasSubmittedEvidence={hasSubmittedEvidence}

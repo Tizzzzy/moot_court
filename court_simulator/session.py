@@ -3,8 +3,7 @@ from court_simulator.agent import (
     CourtroomAgents,
     ObjectionDecision,
     CourtroomResponse,
-    ControllerDecision,
-    PlaintiffFeedback
+    ControllerDecision
 )
 import json
 import os
@@ -27,7 +26,7 @@ class CourtSession:
         self.current_speaker: str = "Judge"
         self.evidence_buffer: List[str] = []  # Now stores file paths, not dicts
         self.turn_number: int = 0
-        self.verdict_issued: bool = False  # Track if trial has ended
+        self.verdict_issued: bool = False
 
     def process_plaintiff_turn(
         self,
@@ -80,22 +79,6 @@ class CourtSession:
         self._add_to_history("Plaintiff", statement)
         self.turn_number += 1
 
-    def get_plaintiff_feedback(self, statement: str) -> PlaintiffFeedback:
-        """
-        Generate educational feedback for the plaintiff's statement.
-
-        Args:
-            statement: The plaintiff's statement to evaluate
-
-        Returns:
-            PlaintiffFeedback with did_well and improvements
-        """
-        return self.agents.provide_plaintiff_feedback(
-            plaintiff_statement=statement,
-            history=self.history,
-            case_data=self.case_data
-        )
-
     def process_ai_turn(self) -> CourtroomResponse:
         """
         Process Judge or Defendant turn.
@@ -104,13 +87,6 @@ class CourtSession:
         Returns:
             CourtroomResponse with dialogue, inner thoughts, and optional evidence request
         """
-        # If verdict already issued, return end message
-        if self.verdict_issued:
-            return CourtroomResponse(
-                role="System",
-                dialogue="The trial has concluded. A verdict has been issued."
-            )
-
         # Retrieve ALL historical evidence from directory
         all_evidence = self.get_all_evidence_paths()
 
@@ -122,6 +98,10 @@ class CourtSession:
             evidence_paths=all_evidence if all_evidence else None
         )
 
+        # Check for verdict BEFORE adding to history
+        if self.current_speaker == "Judge":
+            self.check_for_verdict(response)
+
         # Clear evidence buffer after AI processes it
         self.evidence_buffer = []
 
@@ -130,30 +110,43 @@ class CourtSession:
             if response.evidence_request.requesting_evidence:
                 self.evidence_upload_allowed = True
 
-        # Check if Judge issued a verdict
-        if self.current_speaker == "Judge":
-            dialogue_lower = response.dialogue.lower()
-            verdict_phrases = [
-                "i rule in favor",
-                "i find in favor",
-                "i award",
-                "judgment for",
-                "the court rules",
-                "verdict is",
-                "case dismissed",
-                "judgment is entered",
-                "i hereby order",
-                "plaintiff is awarded",
-                "defendant is awarded"
-            ]
-            if any(phrase in dialogue_lower for phrase in verdict_phrases):
-                self.verdict_issued = True
-
         # Add to history
         self._add_to_history(self.current_speaker, response.dialogue)
         self.turn_number += 1
 
         return response
+
+    def check_for_verdict(self, response: CourtroomResponse) -> bool:
+        """
+        Check if Judge's response contains a final verdict.
+        Returns True if verdict was issued.
+        """
+        if self.current_speaker != "Judge":
+            return False
+
+        # Only check after significant trial progress (turn 5+)
+        if self.turn_number < 5:
+            return False
+
+        dialogue_lower = response.dialogue.lower()
+
+        # Must have verdict keyword AND a decision phrase
+        has_verdict_keyword = any(kw in dialogue_lower for kw in [
+            'verdict', 'ruling', 'judgment', 'my decision'
+        ])
+
+        has_decision = any(phrase in dialogue_lower for phrase in [
+            'i find for', 'i rule in favor', 'judgment for',
+            'plaintiff wins', 'defendant wins', 'case dismissed',
+            'in favor of the plaintiff', 'in favor of the defendant'
+        ])
+
+        if has_verdict_keyword and has_decision:
+            self.verdict_issued = True
+            self.current_speaker = "Verdict"
+            return True
+
+        return False
 
     def decide_next_speaker(self) -> str:
         """
@@ -162,21 +155,10 @@ class CourtSession:
         Returns:
             The role of the next speaker
         """
-        # If verdict already issued, trial is over
-        if self.verdict_issued:
-            self.current_speaker = "Verdict"
-            return "Verdict"
-
         decision = self.agents.get_controller_decision(
-            history=self.history[-10:] if len(self.history) > 10 else self.history,
-            turn_number=self.turn_number
+            history=self.history[-10:] if len(self.history) > 10 else self.history
         )
         self.current_speaker = decision.next_speaker
-
-        # Mark verdict issued if Verdict is selected
-        if decision.next_speaker == "Verdict":
-            self.verdict_issued = True
-
         return decision.next_speaker
 
     def _add_to_history(self, role: str, content: str):

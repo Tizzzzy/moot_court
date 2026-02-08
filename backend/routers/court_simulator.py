@@ -29,6 +29,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["court"])
 
+# Feature flags - set to False to disable
+ENABLE_FEEDBACK = False
+ENABLE_OBJECTIONS = False
+
 # Initialize services
 _session_service: Optional[CourtSessionService] = None
 _evidence_services: dict = {}  # session_id -> EvidenceService
@@ -154,24 +158,26 @@ async def send_plaintiff_message(
         if not court_session:
             raise ValueError(f"Session {session_id} not found")
 
-        # Check for objections
-        objection_result = court_session.process_plaintiff_turn(request.message)
-        has_objection, objection_decision = objection_result
+        # Check for objections (if enabled)
+        if ENABLE_OBJECTIONS:
+            objection_result = court_session.process_plaintiff_turn(request.message)
+            has_objection, objection_decision = objection_result
 
-        if has_objection:
-            return SendMessageResponse(
-                status="objection_raised",
-                objection=ObjectionDecision(**objection_decision.model_dump())
-                if hasattr(objection_decision, "model_dump")
-                else ObjectionDecision(**vars(objection_decision)),
-            )
-        else:
-            # No objection - add to history and process AI response
-            logger.info(f"Session {session_id}: No objection, finalizing plaintiff turn")
-            court_session.finalize_plaintiff_turn(request.message)
+            if has_objection:
+                return SendMessageResponse(
+                    status="objection_raised",
+                    objection=ObjectionDecision(**objection_decision.model_dump())
+                    if hasattr(objection_decision, "model_dump")
+                    else ObjectionDecision(**vars(objection_decision)),
+                )
 
-            # Generate educational feedback for the plaintiff
-            plaintiff_feedback = None
+        # Finalize plaintiff turn (objection checking is disabled or no objection found)
+        logger.info(f"Session {session_id}: Finalizing plaintiff turn")
+        court_session.finalize_plaintiff_turn(request.message)
+
+        # Generate educational feedback for the plaintiff (if enabled)
+        plaintiff_feedback = None
+        if ENABLE_FEEDBACK:
             try:
                 logger.info(f"Session {session_id}: Generating feedback...")
                 feedback_result = court_session.get_plaintiff_feedback(request.message)
@@ -189,133 +195,127 @@ async def send_plaintiff_message(
             except Exception as feedback_error:
                 logger.warning(f"Failed to generate plaintiff feedback: {feedback_error}", exc_info=True)
 
+        service.save_session(session_id, db)
+
+        # Check if verdict was already issued
+        if court_session.verdict_issued:
+            logger.info(f"Session {session_id}: Verdict already issued, trial ended")
+            return SendMessageResponse(
+                status="success",
+                message="The trial has concluded. A verdict has been issued.",
+                feedback=plaintiff_feedback,
+            )
+
+        # Collect all AI responses (Judge and/or Defendant may both respond)
+        all_responses = []
+        evidence_allowed = court_session.evidence_upload_allowed
+
+        # Decide first who should respond
+        logger.info(f"Session {session_id}: Deciding next speaker...")
+        next_speaker = court_session.decide_next_speaker()
+        logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
+
+        # If verdict, trial is over
+        if next_speaker == "Verdict" or court_session.verdict_issued:
             service.save_session(session_id, db)
+            return SendMessageResponse(
+                status="success",
+                message="The trial has concluded.",
+                feedback=plaintiff_feedback,
+            )
 
-            # Check if verdict was already issued
-            if getattr(court_session, 'verdict_issued', False):
-                logger.info(f"Session {session_id}: Verdict already issued, trial ended")
-                return SendMessageResponse(
-                    status="success",
-                    message="The trial has concluded. A verdict has been issued.",
-                    feedback=plaintiff_feedback,
+        # Process AI turns until it's Plaintiff's turn or verdict
+        max_ai_turns = 5  # Allow more turns for proper proceedings
+        ai_turn_count = 0
+
+        try:
+            while next_speaker not in ["Plaintiff", "Verdict"] and ai_turn_count < max_ai_turns:
+                ai_turn_count += 1
+                logger.info(f"Session {session_id}: AI turn {ai_turn_count}, speaker: {next_speaker}")
+
+                # Get AI response
+                ai_response = court_session.process_ai_turn()
+                logger.info(f"Session {session_id}: AI response from {ai_response.role}: {ai_response.dialogue[:50] if ai_response.dialogue else 'empty'}...")
+                all_responses.append(ai_response)
+
+                # Send to WebSocket clients
+                await ws_manager.send_response(
+                    session_id,
+                    ai_response.role,
+                    ai_response.dialogue,
+                    inner_thought=ai_response.inner_thought,
+                    evidence_request=(
+                        ai_response.evidence_request.model_dump()
+                        if ai_response.evidence_request
+                        else None
+                    ),
                 )
 
-            # Collect all AI responses (Judge and/or Defendant may both respond)
-            all_responses = []
-            evidence_allowed = court_session.evidence_upload_allowed
+                # Check if verdict was issued in this response
+                if court_session.verdict_issued:
+                    logger.info(f"Session {session_id}: Verdict issued, ending trial")
+                    await ws_manager.send_next_speaker(session_id, "Verdict")
+                    break
 
-            # Decide first who should respond
-            logger.info(f"Session {session_id}: Deciding next speaker...")
-            next_speaker = court_session.decide_next_speaker()
-            logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
-
-            # IMPORTANT: After plaintiff speaks, AI should ALWAYS respond first
-            # Force to Defendant if controller returns Plaintiff (which is wrong)
-            if next_speaker == "Plaintiff":
-                logger.warning(f"Session {session_id}: Controller returned Plaintiff after Plaintiff spoke - forcing to Defendant")
-                next_speaker = "Defendant"
-                court_session.current_speaker = "Defendant"
-
-            # If verdict, trial is over
-            if next_speaker == "Verdict" or getattr(court_session, 'verdict_issued', False):
-                service.save_session(session_id, db)
-                return SendMessageResponse(
-                    status="success",
-                    message="The trial has concluded.",
-                    feedback=plaintiff_feedback,
-                )
-
-            # Process AI turns until it's Plaintiff's turn or verdict
-            max_ai_turns = 5  # Allow more turns for proper proceedings
-            ai_turn_count = 0
-
-            try:
-                while next_speaker not in ["Plaintiff", "Verdict"] and ai_turn_count < max_ai_turns:
-                    ai_turn_count += 1
-                    logger.info(f"Session {session_id}: AI turn {ai_turn_count}, speaker: {next_speaker}")
-
-                    # Get AI response
-                    ai_response = court_session.process_ai_turn()
-                    logger.info(f"Session {session_id}: AI response from {ai_response.role}: {ai_response.dialogue[:50] if ai_response.dialogue else 'empty'}...")
-                    all_responses.append(ai_response)
-
-                    # Send to WebSocket clients
-                    await ws_manager.send_response(
+                # Check if Judge requested evidence
+                if ai_response.evidence_request and ai_response.evidence_request.requesting_evidence:
+                    evidence_allowed = True
+                    await ws_manager.send_evidence_request(
                         session_id,
-                        ai_response.role,
-                        ai_response.dialogue,
-                        inner_thought=ai_response.inner_thought,
-                        evidence_request=(
-                            ai_response.evidence_request.model_dump()
-                            if ai_response.evidence_request
-                            else None
-                        ),
+                        True,
+                        ai_response.evidence_request.evidence_types or [],
                     )
 
-                    # Check if Judge requested evidence
-                    if ai_response.evidence_request and ai_response.evidence_request.requesting_evidence:
-                        evidence_allowed = True
-                        await ws_manager.send_evidence_request(
-                            session_id,
-                            True,
-                            ai_response.evidence_request.evidence_types or [],
-                        )
+                # Decide next speaker
+                next_speaker = court_session.decide_next_speaker()
 
-                    # Check if verdict was issued in this response
-                    if getattr(court_session, 'verdict_issued', False):
-                        logger.info(f"Session {session_id}: Verdict issued during AI turn")
-                        break
+                # If Plaintiff's turn, break and let them speak
+                if next_speaker == "Plaintiff":
+                    await ws_manager.send_next_speaker(session_id, "Plaintiff")
+                    break
 
-                    # Decide next speaker
-                    next_speaker = court_session.decide_next_speaker()
+        except Exception as ai_loop_error:
+            logger.error(f"Session {session_id}: Error in AI turn loop: {ai_loop_error}", exc_info=True)
+            # Still try to return what we have
+            await ws_manager.send_error(session_id, f"AI processing error: {str(ai_loop_error)}")
 
-                    # If Plaintiff's turn, break and let them speak
-                    if next_speaker == "Plaintiff":
-                        await ws_manager.send_next_speaker(session_id, "Plaintiff")
-                        break
+        service.save_session(session_id, db)
 
-            except Exception as ai_loop_error:
-                logger.error(f"Session {session_id}: Error in AI turn loop: {ai_loop_error}", exc_info=True)
-                # Still try to return what we have
-                await ws_manager.send_error(session_id, f"AI processing error: {str(ai_loop_error)}")
+        # Return the last AI response in HTTP response (fallback for when WebSocket fails)
+        from backend.schemas.court_schemas import CourtroomResponse as SchemaResponse, EvidenceRequestModel
 
-            service.save_session(session_id, db)
-
-            # Return the last AI response in HTTP response (fallback for when WebSocket fails)
-            from backend.schemas.court_schemas import CourtroomResponse as SchemaResponse, EvidenceRequestModel
-
-            # Use the last response for the HTTP return
-            if not all_responses:
-                logger.warning(f"Session {session_id}: No AI responses generated")
-                return SendMessageResponse(
-                    status="success",
-                    feedback=plaintiff_feedback,
-                    message="Waiting for court response...",
-                    evidence_upload_allowed=evidence_allowed,
-                )
-
-            last_response = all_responses[-1]
-
-            # Convert evidence_request to schema model if present
-            evidence_req_schema = None
-            if last_response.evidence_request:
-                evidence_req_schema = EvidenceRequestModel(
-                    requesting_evidence=last_response.evidence_request.requesting_evidence,
-                    evidence_types=last_response.evidence_request.evidence_types,
-                    urgency=last_response.evidence_request.urgency,
-                )
-
+        # Use the last response for the HTTP return
+        if not all_responses:
+            logger.warning(f"Session {session_id}: No AI responses generated")
             return SendMessageResponse(
                 status="success",
                 feedback=plaintiff_feedback,
-                ai_response=SchemaResponse(
-                    role=last_response.role,
-                    dialogue=last_response.dialogue,
-                    inner_thought=last_response.inner_thought,
-                    evidence_request=evidence_req_schema,
-                ),
+                message="Waiting for court response...",
                 evidence_upload_allowed=evidence_allowed,
             )
+
+        last_response = all_responses[-1]
+
+        # Convert evidence_request to schema model if present
+        evidence_req_schema = None
+        if last_response.evidence_request:
+            evidence_req_schema = EvidenceRequestModel(
+                requesting_evidence=last_response.evidence_request.requesting_evidence,
+                evidence_types=last_response.evidence_request.evidence_types,
+                urgency=last_response.evidence_request.urgency,
+            )
+
+        return SendMessageResponse(
+            status="success",
+            feedback=plaintiff_feedback,
+            ai_response=SchemaResponse(
+                role=last_response.role,
+                dialogue=last_response.dialogue,
+                inner_thought=last_response.inner_thought,
+                evidence_request=evidence_req_schema,
+            ),
+            evidence_upload_allowed=evidence_allowed,
+        )
     except Exception as e:
         logger.error(f"Error sending message: {e}")
         await ws_manager.send_error(session_id, str(e))

@@ -36,6 +36,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     currentSpeaker: "judge",
     turnNumber: 0,
     evidenceUploadAllowed: false,
+    verdictIssued: false,
     messages: [],
     isLoading: false,
     error: null,
@@ -353,10 +354,18 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
               msg.speaker === mapSpeakerName(response.role)
           );
 
+          // Check if this is a verdict
+          const isVerdict = response.role.toLowerCase() === "verdict" ||
+            (response.role.toLowerCase() === "judge" &&
+             (response.dialogue.toLowerCase().includes("verdict") ||
+              response.dialogue.toLowerCase().includes("i find for") ||
+              response.dialogue.toLowerCase().includes("judgment for")));
+
           if (alreadyExists) {
             return {
               ...s,
               currentSpeaker: response.role,
+              verdictIssued: isVerdict,
               isLoading: false,
             };
           }
@@ -373,6 +382,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
             ...s,
             messages: [...s.messages, chatMsg],
             currentSpeaker: response.role,
+            verdictIssued: isVerdict,
             isLoading: false,
           };
         });
@@ -384,6 +394,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         setState((s) => ({
           ...s,
           currentSpeaker: nextSpeaker.speaker,
+          verdictIssued: nextSpeaker.speaker === "Verdict",
         }));
         break;
 

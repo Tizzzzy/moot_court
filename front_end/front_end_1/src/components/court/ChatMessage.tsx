@@ -77,7 +77,7 @@ export function ChatMessage({ speaker, text, isUser, feedback, isLastUserMessage
         </div>
       </div>
 
-      {feedback && (
+      {feedback && false && (
         <div className="bg-gradient-to-br from-[#f0fdf4] to-[#e6f7ed] border border-[#86efac] rounded-xl p-5 max-w-[672px] shadow-sm">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 w-10 h-10 bg-[#00A63E] rounded-full flex items-center justify-center">

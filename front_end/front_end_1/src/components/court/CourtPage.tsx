@@ -245,6 +245,7 @@ export function CourtPage() {
           editingMessage={editingMessage}
           caseData={caseData}
           evidenceUploadAllowed={courtSession.evidenceUploadAllowed}
+          verdictIssued={courtSession.verdictIssued}
         />
       )}
 
