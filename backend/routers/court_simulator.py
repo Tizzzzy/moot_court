@@ -197,15 +197,6 @@ async def send_plaintiff_message(
 
         service.save_session(session_id, db)
 
-        # Check if verdict was already issued
-        if court_session.verdict_issued:
-            logger.info(f"Session {session_id}: Verdict already issued, trial ended")
-            return SendMessageResponse(
-                status="success",
-                message="The trial has concluded. A verdict has been issued.",
-                feedback=plaintiff_feedback,
-            )
-
         # Collect all AI responses (Judge and/or Defendant may both respond)
         all_responses = []
         evidence_allowed = court_session.evidence_upload_allowed
@@ -215,13 +206,33 @@ async def send_plaintiff_message(
         next_speaker = court_session.decide_next_speaker()
         logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
 
-        # If verdict, trial is over
-        if next_speaker == "Verdict" or court_session.verdict_issued:
+        # If verdict, generate final verdict message
+        if next_speaker == "Verdict":
+            logger.info(f"Session {session_id}: Generating verdict message...")
+            verdict_response = court_session.process_ai_turn()
+
+            # Send verdict via WebSocket
+            await ws_manager.send_response(
+                session_id,
+                verdict_response.role,
+                verdict_response.dialogue,
+                inner_thought=verdict_response.inner_thought,
+            )
+            await ws_manager.send_next_speaker(session_id, "Verdict")
+
+            # Mark trial as complete and save transcript
+            service.complete_session(session_id, db)
             service.save_session(session_id, db)
+
             return SendMessageResponse(
-                status="success",
+                status="verdict",
                 message="The trial has concluded.",
                 feedback=plaintiff_feedback,
+                ai_response=SchemaResponse(
+                    role=verdict_response.role,
+                    dialogue=verdict_response.dialogue,
+                    inner_thought=verdict_response.inner_thought,
+                ),
             )
 
         # Process AI turns until it's Plaintiff's turn or verdict
@@ -251,12 +262,6 @@ async def send_plaintiff_message(
                     ),
                 )
 
-                # Check if verdict was issued in this response
-                if court_session.verdict_issued:
-                    logger.info(f"Session {session_id}: Verdict issued, ending trial")
-                    await ws_manager.send_next_speaker(session_id, "Verdict")
-                    break
-
                 # Check if Judge requested evidence
                 if ai_response.evidence_request and ai_response.evidence_request.requesting_evidence:
                     evidence_allowed = True
@@ -272,6 +277,23 @@ async def send_plaintiff_message(
                 # If Plaintiff's turn, break and let them speak
                 if next_speaker == "Plaintiff":
                     await ws_manager.send_next_speaker(session_id, "Plaintiff")
+                    break
+
+                # CRITICAL FIX: Check for verdict in AI loop
+                if next_speaker == "Verdict":
+                    logger.info(f"Session {session_id}: Verdict reached in AI loop")
+                    verdict_response = court_session.process_ai_turn()
+
+                    await ws_manager.send_response(
+                        session_id,
+                        verdict_response.role,
+                        verdict_response.dialogue,
+                        inner_thought=verdict_response.inner_thought,
+                    )
+                    await ws_manager.send_next_speaker(session_id, "Verdict")
+
+                    # Complete session with transcript save
+                    service.complete_session(session_id, db)
                     break
 
         except Exception as ai_loop_error:
@@ -390,9 +412,11 @@ async def upload_evidence(
 
         # Upload files to the session's evidence directory
         evidence_service = EvidenceService(court_session.evidence_submit_dir)
+        logger.info(f"Session {session_id}: Uploading evidence to: {court_session.evidence_submit_dir}, turn: {court_session.turn_number}")
         uploaded = await evidence_service.upload_evidence(
             files, court_session.turn_number
         )
+        logger.info(f"Session {session_id}: Uploaded {len(uploaded)} evidence files")
 
         # Store file paths in session for AI processing
         file_paths = [f["path"] for f in uploaded]

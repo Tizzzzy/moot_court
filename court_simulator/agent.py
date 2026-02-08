@@ -216,26 +216,19 @@ Return structured ObjectionDecision with educational reasoning.
         # Simplify context for the token limit
         context = json.dumps(history[-10:]) if len(history) > 10 else json.dumps(history)
 
-        # Get last speaker to enforce strict turn-taking
-        last_speaker = history[-1]['role'] if history else None
-
         prompt = f"""
-        You are the Court Clerk managing speaker order in a small claims trial.
+        You are the Court Clerk. Review the trial history and decide who speaks next.
 
-        Last speaker: {last_speaker}
-        Recent history (last 10 exchanges): {context}
+        History: {context}
 
-        STRICT TURN-TAKING RULES:
-        1. After Plaintiff speaks → MUST be Judge or Defendant (NEVER Plaintiff again)
-        2. After Defendant speaks → MUST be Judge or Plaintiff
-        3. After Judge speaks → Can be Plaintiff, Defendant, or Verdict (if ready)
-        4. If trial history is empty → Judge opens court
-        5. If Judge has sufficient evidence and both sides presented → Verdict
+        Rules:
+        - If Judge asked a specific person, they speak next.
+        - If Plaintiff spoke, Defendant rebuts.
+        - If Defendant spoke, Judge acknowledges or asks Plaintiff.
+        - If Judge made decision, select 'Verdict'.
+        - If history is empty, 'Judge' starts.
 
-        CRITICAL: You CANNOT return "Plaintiff" if the last speaker was "Plaintiff"!
-
-        Based on the conversation flow, who should speak next?
-        Return ONLY valid JSON with next_speaker field.
+        Return only the next_speaker field.
         """
 
         try:
@@ -376,7 +369,15 @@ Challenge evidence credibility, point out inconsistencies, or argue insufficient
                     "response_json_schema": CourtroomResponse.model_json_schema(),
                 },
             )
-            return CourtroomResponse.model_validate_json(response.text)
+
+            # Parse Gemini's response
+            courtroom_response = CourtroomResponse.model_validate_json(response.text)
+
+            # CRITICAL FIX: Override role to match input parameter
+            # Gemini may set role based on context instead of parameter
+            courtroom_response.role = role
+
+            return courtroom_response
 
         except Exception as e:
             print(f"{role} response generation error: {e}")

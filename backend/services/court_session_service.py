@@ -152,15 +152,38 @@ class CourtSessionService:
     def complete_session(self, session_id: str, db: Session) -> None:
         """
         Mark session as completed and save transcript.
-        """
-        if session_id in self._session_cache:
-            del self._session_cache[session_id]
 
+        Args:
+            session_id: Session identifier
+            db: Database session
+        """
+        # Get session from cache BEFORE deleting it
+        court_session = self._session_cache.get(session_id)
+
+        # Get database record to retrieve user_id
         db_session = (
             db.query(CourtSessionModel)
             .filter(CourtSessionModel.session_id == session_id)
             .first()
         )
+
+        # Save transcript to user-specific path
+        if court_session and db_session:
+            evidence_dir = get_user_evidence_dir(db_session.user_id)
+            transcript_path = evidence_dir / "court_transcript.json"
+
+            # Ensure directory exists
+            transcript_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Save transcript using CourtSession method
+            court_session.save_transcript(str(transcript_path))
+            logger.info(f"Session {session_id}: Transcript saved to {transcript_path}")
+
+        # Remove from cache
+        if session_id in self._session_cache:
+            del self._session_cache[session_id]
+
+        # Update database status
         if db_session:
             db_session.status = "completed"
             db.commit()
@@ -206,24 +229,29 @@ class CourtSessionService:
             "evidence_upload_allowed": session.evidence_upload_allowed,
             "evidence_buffer": session.evidence_buffer,
             "history": session.history,  # Already dicts from session.py
-            "verdict_issued": getattr(session, "verdict_issued", False),
         }
         return json.dumps(state, default=str)
 
     def _restore_session(self, state_json: str) -> CourtSession:
         """
         Restore CourtSession from JSON string.
+        Ensures evidence directory is properly restored and verified.
         """
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable not set")
 
         state = json.loads(state_json)
 
+        # Get evidence_submit_dir and verify it exists
+        evidence_submit_dir = state.get("evidence_submit_dir", "")
+        if not evidence_submit_dir:
+            logger.warning(f"evidence_submit_dir missing from state snapshot")
+
         # Create new session with restored state
         session = CourtSession(
             case_data=state["case_data"],
             api_key=self.api_key,
-            evidence_submit_dir=state.get("evidence_submit_dir", ""),
+            evidence_submit_dir=evidence_submit_dir,
         )
 
         session.session_id = state.get("session_id", "")
@@ -232,7 +260,11 @@ class CourtSessionService:
         session.evidence_upload_allowed = state.get("evidence_upload_allowed", False)
         session.evidence_buffer = state.get("evidence_buffer", [])
         session.history = state.get("history", [])
-        session.verdict_issued = state.get("verdict_issued", False)
+
+        # Ensure directory exists after restoration
+        if evidence_submit_dir:
+            os.makedirs(evidence_submit_dir, exist_ok=True)
+            logger.info(f"Evidence directory verified: {evidence_submit_dir}")
 
         return session
 
