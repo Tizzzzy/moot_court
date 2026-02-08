@@ -75,7 +75,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         ...s,
         sessionId: response.session_id,
         messages: [openingMessage],
-        currentSpeaker: "plaintiff", // Plaintiff presents case after Judge opens
+        currentSpeaker: "Plaintiff", // Plaintiff presents case after Judge opens
         turnNumber: 1,
         status: "active",
         isLoading: false,
