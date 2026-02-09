@@ -8,7 +8,7 @@ from pathlib import Path
 print("✓ Test 1: Config loading...", end=" ")
 try:
     from backend.config import settings
-    assert settings.OPENAI_API_KEY
+    assert settings.GEMINI_API_KEY
     assert settings.HUGGINGFACE_TOKEN
     assert settings.DATABASE_URL
     print("PASS")

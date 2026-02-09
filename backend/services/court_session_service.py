@@ -25,8 +25,7 @@ class CourtSessionService:
     """
 
     def __init__(self):
-        # self.api_key = os.getenv("GEMINI_API_KEY")
-        self.api_key = "AIzaSyDidgcddZDzZS59zPv4f8ztU_Bd7DyrDss"
+        self.api_key = os.getenv("GEMINI_API_KEY")
         # In-memory cache for active sessions
         self._session_cache: Dict[str, CourtSession] = {}
 

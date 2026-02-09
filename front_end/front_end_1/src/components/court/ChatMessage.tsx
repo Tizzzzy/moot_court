@@ -6,7 +6,7 @@ interface ChatMessageProps {
   isUser?: boolean;
   feedback?: {
     positive: string;
-    improvement: string;
+    improvements: string[];
   };
   isLastUserMessage?: boolean;
   onEdit?: () => void;
@@ -96,7 +96,11 @@ export function ChatMessage({ speaker, text, isUser, feedback, isLastUserMessage
                   <div className="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></div>
                   <p className="text-sm font-semibold text-[#0d542b]">Areas for improvement</p>
                 </div>
-                <p className="text-sm text-[#047857] leading-relaxed">{feedback.improvement}</p>
+                <ul className="text-sm text-[#047857] leading-relaxed space-y-2 list-disc list-inside">
+                  {feedback.improvements.map((improvement, index) => (
+                    <li key={index}>{improvement}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>

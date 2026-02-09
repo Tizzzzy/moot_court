@@ -143,7 +143,7 @@ export function ActiveHearing({
 
   return (
     <div className="min-h-screen flex flex-col pb-32">
-      {/* Header with Progress - Sticky */}
+      {/* Header - Sticky */}
       <div className="sticky top-0 z-40 bg-white border-b border-[#e2e8f0] shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-6">
           <button
@@ -153,18 +153,6 @@ export function ActiveHearing({
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to case dashboard</span>
           </button>
-          
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[#45556c]">{stepTitles[currentStep]}</h2>
-            <span className="text-[#62748e]">{Math.round(progress)}% Complete</span>
-          </div>
-          
-          <div className="w-full bg-[rgba(3,2,19,0.2)] rounded-full h-2">
-            <div 
-              className="bg-[#030213] h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
         </div>
       </div>
 

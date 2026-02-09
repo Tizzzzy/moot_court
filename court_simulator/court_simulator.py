@@ -168,7 +168,7 @@ def main():
         return
 
     # Get API key
-    api_key = 'AIzaSyDidgcddZDzZS59zPv4f8ztU_Bd7DyrDss'
+    api_key = ''
 
     if not api_key:
         api_key = os.getenv("GEMINI_API_KEY")

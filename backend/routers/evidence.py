@@ -54,15 +54,15 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
 
     print(f"[CASE] Saved case data for user {user_id}: {json_path}")
 
-    # Generate evidence recommendations using OpenAI
+    # Generate evidence recommendations using Gemini
     evidence_dir = get_user_evidence_dir(user_id)
     conversation_path = evidence_dir / "evidence_conversation.json"
 
     try:
-        evidence_dict = recommend_evidence(data_dict, settings.OPENAI_API_KEY)
-        print(f"[EVIDENCE] Generated {len(evidence_dict)} recommendations via OpenAI")
+        evidence_dict = recommend_evidence(data_dict, settings.GEMINI_API_KEY)
+        print(f"[EVIDENCE] Generated {len(evidence_dict)} recommendations via Gemini")
     except Exception as e:
-        print(f"[WARN] OpenAI API failed ({e}), using fallback recommendations")
+        print(f"[WARN] Gemini API failed ({e}), using fallback recommendations")
         evidence_dict = _fallback_recommendations(data_dict)
 
     # Save recommendations
@@ -84,7 +84,7 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
 @router.get("/recommend/{user_id}")
 def get_evidence_recommendations(user_id: str):
     """
-    Read extracted case data, call OpenAI to recommend evidence,
+    Read extracted case data, call Gemini to recommend evidence,
     create folder structure, and return the recommendations.
     """
     # Load case data
@@ -104,11 +104,11 @@ def get_evidence_recommendations(user_id: str):
             evidence_dict = json.load(f)
         return {"recommendations": evidence_dict, "cached": True}
 
-    # Call OpenAI, fall back to rule-based recommendations if API fails
+    # Call Gemini, fall back to rule-based recommendations if API fails
     try:
-        evidence_dict = recommend_evidence(case_data, settings.OPENAI_API_KEY)
+        evidence_dict = recommend_evidence(case_data, settings.GEMINI_API_KEY)
     except Exception as e:
-        print(f"[WARN] OpenAI API failed ({e}), using fallback recommendations")
+        print(f"[WARN] Gemini API failed ({e}), using fallback recommendations")
         evidence_dict = _fallback_recommendations(case_data)
 
     # Save recommendations
@@ -186,7 +186,7 @@ def analyze_evidence(user_id: str, folder_name: str):
     results = []
     for ev_file in evidence_files:
         ready_status, feedback = analyze_evidence_file(
-            case_data, description, str(ev_file), settings.OPENAI_API_KEY
+            case_data, description, [str(ev_file)], settings.GEMINI_API_KEY
         )
         results.append({
             "filename": ev_file.name,

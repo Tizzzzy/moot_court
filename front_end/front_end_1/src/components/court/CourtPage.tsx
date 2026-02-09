@@ -35,7 +35,7 @@ export interface Message {
   objectionReason?: string;
   feedback?: {
     positive: string;
-    improvement: string;
+    improvements: string[];
   };
   evidenceFiles?: EvidenceFile[];
   isPerformanceReport?: boolean;
@@ -60,7 +60,7 @@ function mapChatMessageToMessage(chatMsg: ChatMessage): Message {
     isUser: chatMsg.isUser,
     feedback: chatMsg.feedback ? {
       positive: chatMsg.feedback.positive,
-      improvement: chatMsg.feedback.improvements?.filter(i => i.trim()).join(' • ') || ''
+      improvements: chatMsg.feedback.improvements?.filter(i => i.trim()) || []
     } : undefined,
   };
 }

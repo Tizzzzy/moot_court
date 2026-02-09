@@ -1,16 +1,35 @@
 import json
 import os
-from openai import OpenAI
+from typing import List
+from pydantic import BaseModel, Field
+from google import genai
 
+# ============================================================================
+# Pydantic Schema for Structured Output
+# ============================================================================
+
+class EvidenceItem(BaseModel):
+    filename: str = Field(
+        description="Short, valid filename (e.g., 'Lease_Agreement_PDF'). No spaces/special chars."
+    )
+    description: str = Field(
+        description="Explanation of what this evidence contains and why it helps the case."
+    )
+
+class EvidenceRecommendationResponse(BaseModel):
+    items: List[EvidenceItem]
+
+# ============================================================================
+# Core Functions
+# ============================================================================
 
 def recommend_evidence(extracted_info: dict, api_key: str) -> dict:
     """
-    Uses OpenAI GPT-5-mini to recommend evidence based on extracted case info.
-    Replicates the exact logic from evidence_recommend/evidence_recommend.py
-    and evidence_recommend/llm.py.
+    Uses Gemini (gemini-3-flash-preview) to recommend evidence based on extracted case info.
     Returns a dict of evidence_name -> description.
     """
-    client = OpenAI(api_key=api_key)
+    # Initialize the client with the v1alpha version
+    client = genai.Client(api_key=api_key, http_options={'api_version': 'v1alpha'})
 
     prompt = f"""
     You are a legal strategist. Based on the extracted case information below, recommend relevant pieces of evidence that would support the plaintiff's claims.
@@ -23,21 +42,29 @@ def recommend_evidence(extracted_info: dict, api_key: str) -> dict:
     - The Keys must be short, valid file names for the evidence (e.g., "Lease_Agreement_PDF", "Email_Thread_Nov2023"). Avoid spaces or special characters in keys.
     - The Values must be a description of what information this evidence contains and why it helps the case.
     """
+    try:
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview",
+            contents=[prompt],
+            config={
+                "response_mime_type": "application/json",
+                "response_json_schema": EvidenceRecommendationResponse.model_json_schema(),
+            },
+        )
 
-    messages = [
-        {"role": "system", "content": "You are a helpful legal assistant."},
-        {"role": "user", "content": prompt},
-    ]
+        # Parse the structured response
+        structured_data = EvidenceRecommendationResponse.model_validate_json(response.text)
+        
+        # Convert list back to the dictionary format expected by your downstream code
+        # Format: { "Filename_Key": "Description Value" }
+        evidence_dict = {item.filename: item.description for item in structured_data.items}
+        
+        return evidence_dict
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        response_format={"type": "json_object"},
-    )
-
-    raw = response.choices[0].message.content
-    return json.loads(raw)
-
+    except Exception as e:
+        print(f"Error generating evidence recommendations: {e}")
+        # Return empty dict on failure to prevent crash
+        return {}
 
 def create_evidence_folders(evidence_dict: dict, evidence_folder_path: str):
     """

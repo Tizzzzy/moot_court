@@ -37,8 +37,8 @@ def run_ocr_pipeline(job_id: str, file_path: str, user_id: str):
         job.status = JobStatus.PROCESSING
         db.commit()
 
-        # Step 1: OpenAI API Extraction (direct PDF processing)
-        print(f"[OCR] Processing PDF with OpenAI: {file_path}")
+        # Step 1: Gemini API Extraction (direct PDF processing)
+        print(f"[OCR] Processing PDF with Gemini: {file_path}")
 
         from ocr.info_extract import info_extract
 
