@@ -258,11 +258,6 @@ async def send_plaintiff_message(
                     ai_response.role,
                     ai_response.dialogue,
                     inner_thought=ai_response.inner_thought,
-                    evidence_request=(
-                        ai_response.evidence_request.model_dump()
-                        if ai_response.evidence_request
-                        else None
-                    ),
                 )
 
 
@@ -312,15 +307,6 @@ async def send_plaintiff_message(
 
         last_response = all_responses[-1]
 
-        # Convert evidence_request to schema model if present
-        evidence_req_schema = None
-        if last_response.evidence_request:
-            evidence_req_schema = EvidenceRequestModel(
-                requesting_evidence=last_response.evidence_request.requesting_evidence,
-                evidence_types=last_response.evidence_request.evidence_types,
-                urgency=last_response.evidence_request.urgency,
-            )
-
         return SendMessageResponse(
             status="success",
             feedback=plaintiff_feedback,
@@ -328,7 +314,7 @@ async def send_plaintiff_message(
                 role=last_response.role,
                 dialogue=last_response.dialogue,
                 inner_thought=last_response.inner_thought,
-                evidence_request=evidence_req_schema,
+                evidence_request=None,
             ),
         )
     except Exception as e:
@@ -436,11 +422,6 @@ async def upload_evidence(
             ai_response.role,
             ai_response.dialogue,
             inner_thought=ai_response.inner_thought,
-            evidence_request=(
-                ai_response.evidence_request.model_dump()
-                if ai_response.evidence_request
-                else None
-            ),
         )
 
         # ALWAYS return turn to Plaintiff after evidence acknowledgement
