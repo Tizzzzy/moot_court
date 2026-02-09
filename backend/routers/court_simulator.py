@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["court"])
 
 # Feature flags - set to False to disable
-ENABLE_FEEDBACK = False
+ENABLE_FEEDBACK = True
 ENABLE_OBJECTIONS = False
 
 # Initialize services

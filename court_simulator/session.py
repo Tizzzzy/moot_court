@@ -109,6 +109,23 @@ class CourtSession:
         self.current_speaker = decision.next_speaker
         return decision.next_speaker
 
+    def get_plaintiff_feedback(self, statement: str):
+        """
+        Generate educational feedback for plaintiff's statement.
+        Delegates to CourtroomAgents.provide_plaintiff_feedback().
+
+        Args:
+            statement: The plaintiff's statement to evaluate
+
+        Returns:
+            PlaintiffFeedback with did_well and improvements fields
+        """
+        return self.agents.provide_plaintiff_feedback(
+            plaintiff_statement=statement,
+            history=self.history,
+            case_data=self.case_data
+        )
+
     def _add_to_history(self, role: str, content: str):
         """
         Add entry to conversation history.
