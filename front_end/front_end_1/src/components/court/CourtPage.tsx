@@ -138,7 +138,8 @@ export function CourtPage() {
   const handleSendMessage = async (message: string) => {
     setEditingMessage('');
     try {
-      await courtSession.sendMessage(message);
+      // UPLOAD EVIDENCE FIRST (if any) - ensures it's uploaded during Plaintiff's turn
+      // Backend returns turn to Plaintiff after evidence acknowledgement
       if (pendingEvidenceFiles.length > 0) {
         await courtSession.uploadEvidence(pendingEvidenceFiles);
         setEvidenceFiles(prev => [...prev, ...pendingEvidence]);
@@ -146,6 +147,9 @@ export function CourtPage() {
         setPendingEvidenceFiles([]);
         setEvidencePresented(true);
       }
+
+      // THEN SEND MESSAGE - turn is still Plaintiff after evidence acknowledgement
+      await courtSession.sendMessage(message);
     } catch (error) {
       console.error('Failed to send message:', error);
     }
