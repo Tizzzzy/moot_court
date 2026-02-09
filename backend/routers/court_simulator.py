@@ -109,6 +109,10 @@ async def create_session(
     try:
         service = get_session_service()
         result = service.create_session(request.user_id, request.case_id, db)
+
+        # Notify frontend that turn is now Plaintiff's
+        await ws_manager.send_next_speaker(result["session_id"], "Plaintiff")
+
         return CreateSessionResponse(**result)
     except ValueError as e:
         logger.error(f"Session creation failed: {e}")
@@ -202,11 +206,11 @@ async def send_plaintiff_message(
 
         # Decide first who should respond
         logger.info(f"Session {session_id}: Deciding next speaker...")
-        next_speaker = court_session.decide_next_speaker()
+        next_speaker = court_session.decide_next_speaker().lower()
         logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
 
         # If verdict, generate final verdict message
-        if next_speaker == "Verdict":
+        if next_speaker == "verdict":
             logger.info(f"Session {session_id}: Generating verdict message...")
             verdict_response = court_session.process_ai_turn()
 
@@ -217,7 +221,7 @@ async def send_plaintiff_message(
                 verdict_response.dialogue,
                 inner_thought=verdict_response.inner_thought,
             )
-            await ws_manager.send_next_speaker(session_id, "Verdict")
+            await ws_manager.send_next_speaker(session_id, "verdict")
 
             # Mark trial as complete and save transcript
             service.complete_session(session_id, db)
@@ -239,7 +243,7 @@ async def send_plaintiff_message(
         ai_turn_count = 0
 
         try:
-            while next_speaker not in ["Plaintiff", "Verdict"] and ai_turn_count < max_ai_turns:
+            while next_speaker not in ["plaintiff", "verdict"] and ai_turn_count < max_ai_turns:
                 ai_turn_count += 1
                 logger.info(f"Session {session_id}: AI turn {ai_turn_count}, speaker: {next_speaker}")
 
@@ -263,15 +267,15 @@ async def send_plaintiff_message(
 
 
                 # Decide next speaker
-                next_speaker = court_session.decide_next_speaker()
+                next_speaker = court_session.decide_next_speaker().lower()
 
                 # If Plaintiff's turn, break and let them speak
-                if next_speaker == "Plaintiff":
-                    await ws_manager.send_next_speaker(session_id, "Plaintiff")
+                if next_speaker == "plaintiff":
+                    await ws_manager.send_next_speaker(session_id, "plaintiff")
                     break
 
                 # CRITICAL FIX: Check for verdict in AI loop
-                if next_speaker == "Verdict":
+                if next_speaker == "verdict":
                     logger.info(f"Session {session_id}: Verdict reached in AI loop")
                     verdict_response = court_session.process_ai_turn()
 
@@ -281,7 +285,7 @@ async def send_plaintiff_message(
                         verdict_response.dialogue,
                         inner_thought=verdict_response.inner_thought,
                     )
-                    await ws_manager.send_next_speaker(session_id, "Verdict")
+                    await ws_manager.send_next_speaker(session_id, "verdict")
 
                     # Complete session with transcript save
                     service.complete_session(session_id, db)
@@ -393,6 +397,7 @@ async def upload_evidence(
             raise ValueError(f"Session {session_id} not found")
 
         # Validate it's Plaintiff's turn
+        logger.info(f"It is {court_session.current_speaker}'s turn")   
         if court_session.current_speaker != "Plaintiff":
             raise ValueError(
                 "Evidence can only be uploaded during your turn to speak."
@@ -422,7 +427,7 @@ async def upload_evidence(
         logger.info(f"Session {session_id}: Evidence uploaded - {file_names}")
 
         # Trigger Judge response to acknowledge evidence
-        court_session.current_speaker = "Judge"
+        court_session.current_speaker = "judge"
         ai_response = court_session.process_ai_turn()
 
         # Send AI response via WebSocket
@@ -440,8 +445,8 @@ async def upload_evidence(
 
         # ALWAYS return turn to Plaintiff after evidence acknowledgement
         # This prevents Defendant from interrupting while Plaintiff is typing context
-        court_session.current_speaker = "Plaintiff"
-        await ws_manager.send_next_speaker(session_id, "Plaintiff")
+        court_session.current_speaker = "plaintiff"
+        await ws_manager.send_next_speaker(session_id, "plaintiff")
         logger.info(f"Session {session_id}: Returned turn to Plaintiff after evidence acknowledgement")
 
         service.save_session(session_id, db)

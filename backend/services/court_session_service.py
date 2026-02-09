@@ -68,6 +68,9 @@ class CourtSessionService:
         # Get opening message from Judge
         opening_response = court_session.process_ai_turn()
 
+        # Update current_speaker to Plaintiff after Judge opens
+        court_session.current_speaker = "Plaintiff"
+
         # Store in database
         db_session = CourtSessionModel(
             session_id=session_id,
