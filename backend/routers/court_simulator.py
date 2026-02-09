@@ -221,7 +221,7 @@ async def send_plaintiff_message(
                 verdict_response.dialogue,
                 inner_thought=verdict_response.inner_thought,
             )
-            await ws_manager.send_next_speaker(session_id, "verdict")
+            await ws_manager.send_next_speaker(session_id, "Verdict")
 
             # Mark trial as complete and save transcript
             service.complete_session(session_id, db)
@@ -266,7 +266,7 @@ async def send_plaintiff_message(
 
                 # If Plaintiff's turn, break and let them speak
                 if next_speaker == "plaintiff":
-                    await ws_manager.send_next_speaker(session_id, "plaintiff")
+                    await ws_manager.send_next_speaker(session_id, "Plaintiff")
                     break
 
                 # CRITICAL FIX: Check for verdict in AI loop
@@ -280,7 +280,7 @@ async def send_plaintiff_message(
                         verdict_response.dialogue,
                         inner_thought=verdict_response.inner_thought,
                     )
-                    await ws_manager.send_next_speaker(session_id, "verdict")
+                    await ws_manager.send_next_speaker(session_id, "Verdict")
 
                     # Complete session with transcript save
                     service.complete_session(session_id, db)
@@ -413,21 +413,21 @@ async def upload_evidence(
         logger.info(f"Session {session_id}: Evidence uploaded - {file_names}")
 
         # Trigger Judge response to acknowledge evidence
-        court_session.current_speaker = "judge"
-        ai_response = court_session.process_ai_turn()
+        # court_session.current_speaker = "Judge"
+        # ai_response = court_session.process_ai_turn()
 
-        # Send AI response via WebSocket
-        await ws_manager.send_response(
-            session_id,
-            ai_response.role,
-            ai_response.dialogue,
-            inner_thought=ai_response.inner_thought,
-        )
+        # # Send AI response via WebSocket
+        # await ws_manager.send_response(
+        #     session_id,
+        #     ai_response.role,
+        #     ai_response.dialogue,
+        #     inner_thought=ai_response.inner_thought,
+        # )
 
         # ALWAYS return turn to Plaintiff after evidence acknowledgement
         # This prevents Defendant from interrupting while Plaintiff is typing context
-        court_session.current_speaker = "plaintiff"
-        await ws_manager.send_next_speaker(session_id, "plaintiff")
+        court_session.current_speaker = "Plaintiff"
+        await ws_manager.send_next_speaker(session_id, "Plaintiff")
         logger.info(f"Session {session_id}: Returned turn to Plaintiff after evidence acknowledgement")
 
         service.save_session(session_id, db)

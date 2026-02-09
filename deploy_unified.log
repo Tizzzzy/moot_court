@@ -1,0 +1,128 @@
+
+[0;36m==============================================
+   MOOT COURT UNIFIED APP DEPLOYMENT
+==============================================\033[0m
+
+[0;34m[INFO][0m Checking dependencies...
+[0;32m[SUCCESS][0m All dependencies found
+
+[0;34m[INFO][0m Starting Backend API (FastAPI on port 8000)...
+INFO:     Will watch for changes in these directories: ['/Users/mua/Downloads/moot_court-merge_test_mia']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [810] using StatReload
+/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/google/api_core/_python_version_support.py:246: FutureWarning: You are using a non-supported Python version (3.8.0). Google will not post any further updates to google.api_core supporting this Python version. Please upgrade to the latest Python version, or at least Python 3.10, and then update google.api_core.
+  warnings.warn(message, FutureWarning)
+/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/google/auth/__init__.py:52: FutureWarning: You are using a Python version 3.8 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.8"), FutureWarning)
+/Library/Frameworks/Python.framework/Versions/3.8/lib/python3.8/site-packages/google/oauth2/__init__.py:38: FutureWarning: You are using a Python version 3.8 past its end of life. Google will update google-auth with critical bug fixes on a best-effort basis, but not with any other fixes or features. Please upgrade your Python version, and then update google-auth.
+  warnings.warn(eol_message.format("3.8"), FutureWarning)
+INFO:     Started server process [840]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+[0;32m[SUCCESS][0m Backend API is ready on port 8000
+
+[0;34m[INFO][0m Starting Unified Frontend (port 3000)...
+
+> Moot Court Dashboard Design@0.1.0 dev
+> vite --host
+
+
+  VITE v6.3.5  ready in 220 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://10.0.0.38:3000/
+[0;32m[SUCCESS][0m Unified Frontend is ready on port 3000
+
+[0;36m==============================================
+       UNIFIED DEPLOYMENT COMPLETE!
+==============================================\033[0m
+
+[0;32mBackend API:[0m  http://localhost:8000
+[0;32mAPI Docs:[0m     http://localhost:8000/docs
+
+[0;36m==============================================
+              UNIFIED FRONTEND
+==============================================\033[0m
+
+[0;34mMain App:[0m     http://localhost:3000
+
+  Available Routes:
+  [1;33m/[0m                    - Case Intake (Start Here)
+  [1;33m/case/:userId[0m        - Case Success Page
+  [1;33m/evidence/:userId[0m    - Evidence Upload
+  [1;33m/dashboard/:userId[0m   - AI Evidence Dashboard
+  [1;33m/court/:userId[0m       - Court Hearing Simulator
+
+[0;36m==============================================
+              END-TO-END FLOW
+==============================================\033[0m
+
+  1. Start at http://localhost:3000
+  2. Fill in case details & upload PDF
+  3. View case success -> Evidence page
+  4. Upload evidence on Dashboard
+  5. Practice in Court Simulator
+
+==============================================
+
+[1;33mPress Ctrl+C to stop all services[0m
+
+[STARTUP] Creating database tables...
+[STARTUP] Database tables created
+INFO:     127.0.0.1:57755 - "GET /api/health HTTP/1.1" 200 OK
+[UPLOAD] Received: small_claims_complaint_bundle.pdf (user: user_1770495407842_v86dr7m5y)
+[UPLOAD] BASE_DATA_DIR: /Users/mua/Downloads/moot_court-merge_test_mia/data
+[UPLOAD] Creating directory: /Users/mua/Downloads/moot_court-merge_test_mia/data/user_1770495407842_v86dr7m5y/claims
+[UPLOAD] Saving to: /Users/mua/Downloads/moot_court-merge_test_mia/data/user_1770495407842_v86dr7m5y/claims/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e.pdf
+[UPLOAD] File saved successfully (5292084 bytes)
+[UPLOAD] Job created: 2f2d1b2f-34ba-49fd-bd43-903827fc7b2e
+[UPLOAD] Background task queued for job: 2f2d1b2f-34ba-49fd-bd43-903827fc7b2e
+INFO:     127.0.0.1:57851 - "POST /api/ocr/upload HTTP/1.1" 200 OK
+[OCR] Processing PDF with OpenAI: /Users/mua/Downloads/moot_court-merge_test_mia/data/user_1770495407842_v86dr7m5y/claims/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e.pdf
+[OCR] Extracting from PDF: /Users/mua/Downloads/moot_court-merge_test_mia/data/user_1770495407842_v86dr7m5y/claims/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e.pdf
+[OCR] Converting PDF to images...
+INFO:     127.0.0.1:57851 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+[OCR] Processing 2 page(s) with vision model...
+INFO:     127.0.0.1:57859 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57859 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57864 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57864 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+[OCR] Extraction complete: {'case_number': None, 'case_type': 'Small Claims', 'state': 'IL', 'filing_date': None, 'hearing_date': None, 'plaintiffs': [{'name': 'Mia Ye', 'address': '545 North McClurg Court, Chicago, IL 60611'}], 'defendants': [{'name': 'Horizon Fixit LLC', 'address': '2214 West Greenleaf Avenue, Chicago, IL 60645'}, {'name': 'Michael Torres', 'address': 'Lindell Road, Enterprise, NV 89139'}], 'claim_summary': 'Defendants owe me this amount of money because I hired Horizon Fixit LLC to fix my kitchen refrigerator. They did not complete the work, causing me to buy a new fridge and lose food due to bad work.', 'amount_sought': 4762.88, 'incident_date': '2025-04-18', 'demand_letter_sent': True, 'agreement_included': True}
+[OCR] Extraction complete: {'case_number': None, 'case_type': 'Small Claims', 'state': 'IL', 'filing_date': None, 'hearing_date': None, 'plaintiffs': [{'name': 'Mia Ye', 'address': '545 North McClurg Court, Chicago, IL 60611'}], 'defendants': [{'name': 'Horizon Fixit LLC', 'address': '2214 West Greenleaf Avenue, Chicago, IL 60645'}, {'name': 'Michael Torres', 'address': 'Lindell Road, Enterprise, NV 89139'}], 'claim_summary': 'Defendants owe me this amount of money because I hired Horizon Fixit LLC to fix my kitchen refrigerator. They did not complete the work, causing me to buy a new fridge and lose food due to bad work.', 'amount_sought': 4762.88, 'incident_date': '2025-04-18', 'demand_letter_sent': True, 'agreement_included': True}
+[OCR] Saved extracted data to: /Users/mua/Downloads/moot_court-merge_test_mia/data/user_1770495407842_v86dr7m5y/ocr_output/extracted_data.json
+[OCR] Job 2f2d1b2f-34ba-49fd-bd43-903827fc7b2e completed successfully
+INFO:     127.0.0.1:57864 - "GET /api/ocr/status/2f2d1b2f-34ba-49fd-bd43-903827fc7b2e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57864 - "GET /api/cases/7 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57895 - "GET /api/case-data/user_1770495407842_v86dr7m5y HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57899 - "GET /api/case-data/user_1770495407842_v86dr7m5y HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57901 - "GET /api/evidence/recommend/user_1770495407842_v86dr7m5y HTTP/1.1" 200 OK
+2:51:02 PM [vite] (client) page reload src/main.tsx
+Unable to resolve `@import "tailwindcss"` from /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/src/styles
+2:51:03 PM [vite] Internal server error: [postcss] ENOENT: no such file or directory, open 'tailwindcss'
+  Plugin: vite:css
+  File: /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/src/styles/index.css:undefined:NaN
+      at async open (node:internal/fs/promises:641:25)
+      at async Object.readFile (node:internal/fs/promises:1279:14)
+      at async Object.load (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:43727:25)
+      at async loadImportContent (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-AiMcmC_f.js:673:19)
+      at async Promise.all (index 0)
+      at async resolveImportId (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-AiMcmC_f.js:629:27)
+      at async parseStyles$1 (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-AiMcmC_f.js:537:5)
+      at async Promise.all (index 0)
+      at async resolveImportId (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-AiMcmC_f.js:629:27)
+      at async parseStyles$1 (file:///Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-AiMcmC_f.js:537:5)
+2:51:03 PM [vite] (client) Pre-transform error: [postcss] ENOENT: no such file or directory, open 'tailwindcss'
+  Plugin: vite:css
+  File: /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/src/styles/index.css:undefined:NaN
+2:51:25 PM [vite] vite.config.ts changed, restarting server...
+failed to load config from /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/vite.config.ts
+2:51:25 PM [vite] Cannot find module '@tailwindcss/vite'
+Require stack:
+- /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/vite.config.ts
+- /Users/mua/Downloads/moot_court-merge_test_mia/front_end/front_end_1/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js
+2:51:25 PM [vite] server restart failed
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [840]
+INFO:     Stopping reloader process [810]

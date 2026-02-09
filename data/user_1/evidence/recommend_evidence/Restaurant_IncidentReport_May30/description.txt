@@ -1,1 +1,0 @@
-If the restaurant completed an internal incident/accident report, produce that form documenting the date/time, plaintiff details, and staff notes; shows the restaurant acknowledged the event internally.

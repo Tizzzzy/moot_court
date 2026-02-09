@@ -3,6 +3,7 @@ import json
 import os
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
+import logging
 
 class PlaintiffFeedback(BaseModel):
     """Structured feedback for plaintiff statement"""
@@ -31,7 +32,6 @@ class CourtroomResponse(BaseModel):
     dialogue: str = Field(description="The actual spoken words/response to the court.")
     inner_thought: Optional[str] = Field(description="The agent's internal reasoning or legal strategy.", default=None)
     citations: Optional[List[str]] = Field(description="List of legal precedents or evidence references if applicable.", default=None)
-    evidence_request: Optional[EvidenceRequest] = Field(description="Judge's evidence request, if any", default=None)
 
 class CourtroomAgents:
     def __init__(self, api_key):
@@ -213,6 +213,7 @@ Return structured ObjectionDecision with educational reasoning.
         Determines the next speaker using structured JSON output.
         Returns a ControllerDecision object with only next_speaker.
         """
+        logging.info("-----------------------------Here!!!!!!------------------------------")
         # Simplify context for the token limit
         context = json.dumps(history[-10:]) if len(history) > 10 else json.dumps(history)
 
@@ -242,6 +243,7 @@ Return structured ObjectionDecision with educational reasoning.
             )
             # Validate and parse JSON automatically
             decision = ControllerDecision.model_validate_json(response.text)
+            logging.info(f"---------------------------Controller Decision: {decision}------------------------")
             return decision
 
         except Exception as e:
@@ -255,7 +257,6 @@ Return structured ObjectionDecision with educational reasoning.
         history: List,
         case_data: dict,
         evidence_paths: Optional[List[str]] = None,
-        evidence_upload_allowed: bool = False
     ) -> CourtroomResponse:
         """
         Generates response for Judge/Defendant returning a structured object.
@@ -265,32 +266,24 @@ Return structured ObjectionDecision with educational reasoning.
             history: Conversation history
             case_data: Case information
             evidence_paths: List of file paths to evidence files
-            evidence_upload_allowed: Whether evidence upload is currently allowed
         """
         # case_context = json.dumps(case_data)
         history_context = json.dumps(history)
 
         if role == "Judge":
-            evidence_status = (
-                "Evidence upload is CURRENTLY ALLOWED - plaintiff may submit files"
-                if evidence_upload_allowed else
-                "Evidence upload is BLOCKED - you must explicitly request evidence to allow upload"
-            )
 
             system_instruction = f"""
             You are an impartial Judge in a Small Claims Court in {case_data['state']}.
             Case: {case_data['claim_summary']}
             Amount Sought: ${case_data['amount_sought']}
 
-            EVIDENCE MANAGEMENT:
-            {evidence_status}
-
             To request evidence from plaintiff:
             1. Explicitly ask: "Please provide [specific evidence]"
-            2. Include evidence_request with requesting_evidence = true
-            3. List specific evidence_types needed
+            2. List specific evidence_types needed
 
-            When verdict time comes, set evidence_request = null and provide a detailed verdict with dollar amount.
+            Do not request evidence from defendant.
+
+            When verdict time comes, provide a detailed verdict with dollar amount.
 
             Goal: Determine truth, verify claim, ask clarifying questions, review evidence carefully.
             Be professional and fair. Keep responses to 2-3 sentences unless giving verdict.
@@ -327,11 +320,11 @@ Challenge evidence credibility, point out inconsistencies, or argue insufficient
                 dialogue="Simulation Finished"
             )
 
-        else:
-            return CourtroomResponse(
-                role="System",
-                dialogue="Error: Invalid Role"
-            )
+        # else:
+        #     return CourtroomResponse(
+        #         role="System",
+        #         dialogue="Error: Invalid Role"
+        #     )
 
         # Prepare Content
         prompt_text = f"{system_instruction}\n\nTrial History:\n{history_context}\n\nGenerate the response for {role}."

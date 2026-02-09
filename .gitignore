@@ -1,11 +1,1 @@
 api_key.txt
-.env
-node_modules/
-__pycache__/
-*.pyc
-.vite/
-dist/
-*.log
-.DS_Store
-*.db
-C:/

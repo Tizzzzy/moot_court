@@ -84,7 +84,6 @@ class CourtSession:
             role=self.current_speaker,
             history=self.history,
             case_data=self.case_data,
-            evidence_upload_allowed=False,  # Always false - evidence is always available now
             evidence_paths=all_evidence if all_evidence else None
         )
 
