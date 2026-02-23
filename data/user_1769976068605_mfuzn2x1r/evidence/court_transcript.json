@@ -1,7 +1,7 @@
 [
   {
     "role": "Judge",
-    "content": "I have reviewed your claim regarding the injury sustained at the restaurant on May 30th. Please provide the dining receipt, the dentist's report with x-rays linking the break to the incident, and the itemized billing for the $4,500 treatment. Evidence types needed: Proof of Purchase, Medical Records, and Financial Invoices.",
+    "content": "I have reviewed your claim regarding the dental injury sustained on May 30th, 2024. Please provide the following evidence: a copy of the restaurant receipt, any written incident report or names of staff notified, and your complete dental records including X-rays and itemized invoices for the $4,500 treatment.",
     "turn": 0
   },
   {
@@ -11,17 +11,17 @@
   },
   {
     "role": "Plaintiff",
-    "content": "Good morning your honor. I have the documents right here. This is the dental invoice for the extracion totaling $4500, and here  is the receipt and statement confirming my visit to central east asian cuisine on may 30th, 2024.",
+    "content": "Good morning your honor. I have the documents right here. This is the dental invoice for the extracion totaling $4500, and here\n is the receipt and statement confirming my visit to central east asian cuisine on may 30th, 2024.\n",
     "turn": 1
   },
   {
     "role": "Defendant",
-    "content": "Your Honor, we deny liability as the 'Big Plate Whole Chicken' is a bone-in dish where the presence of small bones is natural and expected by the consumer. Furthermore, the plaintiff has provided financial invoices but failed to submit the medical report or X-rays specifically requested by the court to establish a direct causal link between the meal and the dental injury.",
+    "content": "The defense respectfully denies liability as bones are a natural and expected component of a 'Big Plate Whole Chicken' dish, meaning the plaintiff assumed the inherent risk of consumption. Furthermore, the plaintiff has failed to provide medical evidence establishing that the tooth fracture was caused exclusively by this meal rather than a pre-existing condition.",
     "turn": 2
   },
   {
     "role": "Judge",
-    "content": "While turn_1_1_evidence_1.png documents your visit and the treatment costs, the clinical medical report and X-ray imaging are still outstanding. Please provide the diagnostic dental records and X-rays from your visit following the incident to establish a clear causal link between the meal and the injury. Evidence types needed: Medical Records, X-rays.",
+    "content": "I have reviewed the receipt and dental invoice in turn_1_1_evidence_1.png, but I need medical documentation linking the injury specifically to this incident. Please provide the dentist's clinical notes regarding the cause of the fracture and the names of the staff members you notified at the restaurant. Evidence types needed: clinical dental records, witness statements.",
     "turn": 3
   },
   {
@@ -31,17 +31,17 @@
   },
   {
     "role": "Plaintiff",
-    "content": "I don't have the X ray image, but I have doctor note",
+    "content": "I have doctor note",
     "turn": 4
   },
   {
     "role": "Defendant",
-    "content": "Your Honor, as 'Big Plate Whole Chicken' is a bone-in dish, the presence of bones is natural and expected, and the plaintiff assumed the risk of consumption. We also highlight that the plaintiff failed to provide the requested X-rays and that the submitted report attributes the injury to a 'non-food object,' which contradicts the claim that a chicken bone caused the damage.",
+    "content": "The defense notes that the clinical report characterizes the cause as a 'non-food object,' yet bones are an inherent and expected component of a 'Whole Chicken' dish, making their presence an assumed risk for any consumer. Furthermore, the plaintiff has failed to provide the requested names of the staff notified, and the dental invoices submitted are largely illegible and appear to lack the authenticity required for professional documentation.",
     "turn": 5
   },
   {
     "role": "Judge",
-    "content": "The clinical report in turn_4_1_evidence_3.png attributes the injury to a 'non-food object,' which contradicts your claim that a chicken bone was the cause. Please provide any photographs of the object retrieved from the meal or a statement from your dentist clarifying the 'non-food' designation. Evidence types needed: Physical Evidence, Supplemental Medical Statement.",
+    "content": "The clinical report in turn_4_1_evidence_3.png identifies the cause of your injury as a 'non-food object,' which contradicts your initial claim that you bit into 'small bones.' Please provide [a clarification regarding the specific object you bit and written witness statements from the two friends who were present at the meal]. Evidence types needed: witness statements, clarified statement of fact.",
     "turn": 6
   },
   {
@@ -56,17 +56,32 @@
   },
   {
     "role": "Defendant",
-    "content": "Your Honor, the photograph provided clearly shows a chicken bone, which is a natural and expected component of a 'Big Plate Whole Chicken' dish, meaning the plaintiff assumed the risk of consumption. Furthermore, the plaintiff has still failed to explain why their own medical provider documented the injury as being caused by a 'non-food object,' a direct contradiction that undermines the entire claim.",
+    "content": "The defense maintains that a bone is a natural and expected component of a 'Whole Chicken' dish, and the significant size of the object in the photo suggests the plaintiff failed to exercise reasonable care. Furthermore, the plaintiff has failed to provide the requested witness statements or explain the discrepancy in the clinical report, which attributes the injury to a 'non-food object' rather than a bone.",
     "turn": 8
   },
   {
     "role": "Judge",
-    "content": "The court finds in favor of the Defendant. Under the Illinois 'reasonable expectation' test, a consumer dining on a dish titled 'Whole Chicken' should reasonably expect and guard against the presence of bones, which are natural to the preparation. Furthermore, the clinical report in turn_4_1_evidence_3.png attributes the injury to a 'non-food object,' creating a significant evidentiary contradiction with the Plaintiff's claim that a chicken bone caused the fracture. Consequently, the Plaintiff has failed to meet the burden of proof for liability. Total Award: $0.00.",
+    "content": "I acknowledge the photograph of the bone in turn_7_1_evidence_2.png, yet you have still failed to provide the witness statements from your companions or address the 'non-food object' description in your medical report. Please provide [written witness statements from the two friends present and a clarification as to why the dentist in turn_4_1_evidence_3.png characterized the object as 'non-food']. Evidence types needed: witness statements, clarified statement of fact.",
     "turn": 9
+  },
+  {
+    "role": "Plaintiff",
+    "content": "I do not have any witness statement I am sorry",
+    "turn": 10
+  },
+  {
+    "role": "Defendant",
+    "content": "The Plaintiff’s admission that no witness statements exist leaves the claim entirely unsubstantiated, failing to meet the necessary burden of proof. Furthermore, the defense maintains that bones are an inherent risk in a 'Whole Chicken' dish, and the Plaintiff has failed to reconcile the clinical report’s description of a 'non-food object' with their current allegation.",
+    "turn": 11
+  },
+  {
+    "role": "Judge",
+    "content": "The Court finds in favor of the Defendant and awards $0.00. While the photograph in turn_7_1_evidence_2.png shows a bone, the Plaintiff failed to provide the requested witness statements or resolve the critical discrepancy in the clinical report (turn_4_1_evidence_3.png), which attributes the injury to a 'non-food object.' Furthermore, under Illinois law, consumers must reasonably expect bones in a dish explicitly titled 'Whole Chicken,' and the Plaintiff has not met the burden of proof to establish liability.",
+    "turn": 12
   },
   {
     "role": "Verdict",
     "content": "Simulation Finished",
-    "turn": 10
+    "turn": 13
   }
 ]

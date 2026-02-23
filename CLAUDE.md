@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Moot Court Legal Assistant System** for small claims court case preparation. The system consists of a unified 4-stage Python pipeline and a single React frontend application.
+This is a **Moot Court Legal Assistant System** for small claims court case preparation. The system consists of a 4-stage Python pipeline (OCR, evidence recommendation, evidence feedback, court simulation) and a React-based frontend.
 
 **Tech Stack:**
 - **Backend**: FastAPI, SQLAlchemy (SQLite), Python 3.x
@@ -22,77 +22,21 @@ conda activate moot_court
 pip install -r requirements.txt
 
 # 2. Configure environment variables
-cp .env.example .env
+cp .env
 # Edit .env with your API keys (GEMINI_API_KEY, HUGGINGFACE_TOKEN)
 
-# 3. Setup frontend (first time only)
+# 3. Setup backend
+python -m uvicorn backend.main:app --reload --port 8000
+
+# 4. Setup frontend (first time only)
 cd front_end/front_end_1
 npm install
-cd ../..
-
-# 4. Start unified application (RECOMMENDED)
-bash deploy_unified.sh
+npm run dev
 
 # Access application:
 # - Frontend: http://localhost:3000
 # - Backend API: http://localhost:8000
 # - API Docs: http://localhost:8000/docs
-
-# 5. Stop all services
-bash stop.sh
-```
-
-## Common Development Commands
-
-### Backend Development
-
-```bash
-# Activate Python environment
-conda activate moot_court
-
-# Start backend with auto-reload (port 8000)
-python -m uvicorn backend.main:app --reload --port 8000
-
-# Run OCR pipeline (extracts case data from PDF)
-python ocr/info_extract.py --file data/user_1/claims/case.pdf
-
-# Run evidence recommendation generator
-python evidence_recommend/evidence_recommend.py --input_file extracted.json --evidence_folder_path evidence/
-
-# Run evidence validation/feedback monitor
-python evidence_feedback/monitor_evidence.py --case_info extracted.json --evidence_folder evidence/
-
-# Standalone court simulator (CLI)
-python court_simulator/court_simulator.py
-
-# View API documentation
-open http://localhost:8000/docs
-```
-
-### Frontend Development
-
-```bash
-# Navigate to main frontend
-cd front_end/front_end_1
-
-# Install dependencies (first time only)
-npm install
-
-# Start dev server with HMR (port 3000)
-npm run dev
-
-# Build for production
-npm run build
-```
-
-### Running the Complete Unified Application
-
-```bash
-# Recommended: Unified app (case intake + evidence + court in one SPA)
-bash deploy_unified.sh
-
-# Alternative: Multi-frontend deployment (legacy, not recommended)
-bash deploy.sh
 ```
 
 ## Architecture Overview

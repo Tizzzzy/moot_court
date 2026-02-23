@@ -1,5 +1,5 @@
 import { Send, FolderOpen, Upload } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import svgPaths from '../../imports/svg-to9nw6zppq';
 
 interface ChatInputProps {
@@ -17,11 +17,20 @@ interface ChatInputProps {
 
 export function ChatInput({ onSend, disabled, currentSpeaker = "Plaintiff", evidenceCount = 0, onViewEvidence, hasSubmittedEvidence, onToggleSidePanel, submittedEvidenceCount = 0, initialMessage = '', onMessageChange }: ChatInputProps) {
   const [message, setMessage] = useState(initialMessage || '');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Update message when initialMessage prop changes
   useEffect(() => {
     setMessage(initialMessage || '');
   }, [initialMessage]);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';            // collapse first so shrinking works
+    el.style.height = `${el.scrollHeight}px`; // expand to fit content
+  }, [message]);
 
   const handleMessageChange = (newMessage: string) => {
     setMessage(newMessage);
@@ -47,7 +56,7 @@ export function ChatInput({ onSend, disabled, currentSpeaker = "Plaintiff", evid
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e2e8f0] z-30">
       <div className="max-w-4xl mx-auto px-6 py-4">
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-3 items-end">
           {/* Beautiful Upload Evidence Button */}
           <button
             onClick={onViewEvidence}
@@ -83,12 +92,13 @@ export function ChatInput({ onSend, disabled, currentSpeaker = "Plaintiff", evid
             )}
           </button>
           
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={message}
             onChange={(e) => handleMessageChange(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             disabled={disabled}
+            rows={1}
             placeholder={
               disabled
                 ? currentSpeaker === "Verdict"
@@ -96,7 +106,7 @@ export function ChatInput({ onSend, disabled, currentSpeaker = "Plaintiff", evid
                   : `Waiting for ${currentSpeaker} to speak...`
                 : "Type your response to the judge..."
             }
-            className="flex-1 bg-[#f3f3f5] px-3 h-9 rounded-lg text-sm text-[#0a0a0a] placeholder:text-[#717182] focus:outline-none focus:ring-2 focus:ring-[#155dfc] disabled:opacity-50"
+            className="flex-1 bg-[#f3f3f5] px-3 py-2 min-h-[36px] max-h-32 rounded-lg text-sm text-[#0a0a0a] placeholder:text-[#717182] focus:outline-none focus:ring-2 focus:ring-[#155dfc] disabled:opacity-50 resize-none overflow-y-auto leading-normal"
           />
           <button
             onClick={handleSend}

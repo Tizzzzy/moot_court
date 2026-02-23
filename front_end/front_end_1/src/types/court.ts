@@ -23,6 +23,7 @@ export interface SendMessageRequest {
 
 export interface ContinueAfterObjectionRequest {
   use_original: boolean;
+  message?: string;
 }
 
 export interface EvidenceUploadRequest {

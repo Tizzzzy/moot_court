@@ -17,6 +17,8 @@ from backend.schemas.court_schemas import (
     UploadEvidenceResponse,
     EvidenceFileMetadata,
     ErrorResponse,
+    CourtroomResponse as SchemaResponse,
+    EvidenceRequestModel,
 )
 from backend.services.court_session_service import CourtSessionService
 from backend.services.evidence_service import EvidenceService
@@ -31,7 +33,7 @@ router = APIRouter(tags=["court"])
 
 # Feature flags - set to False to disable
 ENABLE_FEEDBACK = True
-ENABLE_OBJECTIONS = False
+ENABLE_OBJECTIONS = True
 
 # Initialize services
 _session_service: Optional[CourtSessionService] = None
@@ -174,6 +176,15 @@ async def send_plaintiff_message(
                     if hasattr(objection_decision, "model_dump")
                     else ObjectionDecision(**vars(objection_decision)),
                 )
+                # logger.info("\n" + "="*70)
+                # logger.info(f"⚠️  OBJECTION RAISED BY DEFENSE in session {session_id}")
+                # logger.info(f"Type: {objection_decision.objection_type}, Severity: {objection_decision.severity}")
+                # logger.info(f"Type: {objection_decision.objection_type}")
+                # logger.info(f"Severity: {objection_decision.severity.upper()}")
+                # logger.info(f"Reasoning:\n{objection_decision.legal_reasoning}")
+                # if objection_decision.suggested_rephrasing:
+                #     logger.info(f"Suggested Rephrasing:\n\"{objection_decision.suggested_rephrasing}\"")
+                # logger.info("="*70 + "\n")
 
         # Finalize plaintiff turn (objection checking is disabled or no objection found)
         logger.info(f"Session {session_id}: Finalizing plaintiff turn")
@@ -294,8 +305,6 @@ async def send_plaintiff_message(
         service.save_session(session_id, db)
 
         # Return the last AI response in HTTP response (fallback for when WebSocket fails)
-        from backend.schemas.court_schemas import CourtroomResponse as SchemaResponse, EvidenceRequestModel
-
         # Use the last response for the HTTP return
         if not all_responses:
             logger.warning(f"Session {session_id}: No AI responses generated")
@@ -323,7 +332,7 @@ async def send_plaintiff_message(
         raise
 
 
-@router.post("/sessions/{session_id}/objections/continue", response_model=dict)
+@router.post("/sessions/{session_id}/objections/continue", response_model=SendMessageResponse)
 async def continue_after_objection(
     session_id: str,
     request: ContinueAfterObjectionRequest,
@@ -333,6 +342,7 @@ async def continue_after_objection(
     Continue with plaintiff's turn after objection handling.
 
     Called when plaintiff either uses original statement or after rephrasing.
+    Processes the (possibly rephrased) statement and triggers AI response.
     """
     try:
         service = get_session_service()
@@ -341,26 +351,149 @@ async def continue_after_objection(
         if not court_session:
             raise ValueError(f"Session {session_id} not found")
 
-        # In a real implementation, this would handle rephrase logic
-        # For now, it finalizes the turn and triggers AI response
-        # The frontend would have already shown the original statement in history
+        # Finalize plaintiff turn with the message (original or rephrased)
+        if request.message:
+            logger.info(f"Session {session_id}: Finalizing plaintiff turn after objection with message: {request.message[:50]}...")
+            court_session.finalize_plaintiff_turn(request.message)
+        else:
+            logger.warning(f"Session {session_id}: No message provided in continue_after_objection")
 
-        # Proceed to AI response
-        ai_response = court_session.process_ai_turn()
-
-        # Send to WebSocket clients
-        await ws_manager.send_response(
-            session_id,
-            ai_response.role,
-            ai_response.dialogue,
-            inner_thought=ai_response.inner_thought,
-        )
+        # Generate educational feedback for the plaintiff (if enabled)
+        plaintiff_feedback = None
+        if ENABLE_FEEDBACK and request.message:
+            try:
+                logger.info(f"Session {session_id}: Generating feedback after objection...")
+                feedback_result = court_session.get_plaintiff_feedback(request.message)
+                plaintiff_feedback = PlaintiffFeedback(
+                    positive=feedback_result.did_well,
+                    improvements=feedback_result.improvements
+                )
+                logger.info(f"Session {session_id}: Generated feedback: {feedback_result.did_well[:50]}...")
+                # Send feedback via WebSocket for real-time update
+                await ws_manager.send_feedback(
+                    session_id,
+                    feedback_result.did_well,
+                    feedback_result.improvements
+                )
+            except Exception as feedback_error:
+                logger.warning(f"Failed to generate plaintiff feedback after objection: {feedback_error}", exc_info=True)
 
         service.save_session(session_id, db)
 
-        return {"status": "success"}
+        # Collect all AI responses (Judge and/or Defendant may both respond)
+        all_responses = []
+
+        # Decide first who should respond
+        logger.info(f"Session {session_id}: Deciding next speaker after objection...")
+        next_speaker = court_session.decide_next_speaker().lower()
+        logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
+
+        # If verdict, generate final verdict message
+        if next_speaker == "verdict":
+            logger.info(f"Session {session_id}: Generating verdict message after objection...")
+            verdict_response = court_session.process_ai_turn()
+
+            # Send verdict via WebSocket
+            await ws_manager.send_response(
+                session_id,
+                verdict_response.role,
+                verdict_response.dialogue,
+                inner_thought=verdict_response.inner_thought,
+            )
+            await ws_manager.send_next_speaker(session_id, "Verdict")
+
+            # Mark trial as complete and save transcript
+            service.complete_session(session_id, db)
+            service.save_session(session_id, db)
+
+            return SendMessageResponse(
+                status="verdict",
+                message="The trial has concluded.",
+                feedback=plaintiff_feedback,
+                ai_response=SchemaResponse(
+                    role=verdict_response.role,
+                    dialogue=verdict_response.dialogue,
+                    inner_thought=verdict_response.inner_thought,
+                ),
+            )
+
+        # Process AI turns until it's Plaintiff's turn or verdict
+        max_ai_turns = 5
+        ai_turn_count = 0
+
+        try:
+            while next_speaker not in ["plaintiff", "verdict"] and ai_turn_count < max_ai_turns:
+                ai_turn_count += 1
+                logger.info(f"Session {session_id}: AI turn {ai_turn_count} after objection, speaker: {next_speaker}")
+
+                # Get AI response
+                ai_response = court_session.process_ai_turn()
+                logger.info(f"Session {session_id}: AI response from {ai_response.role}: {ai_response.dialogue[:50] if ai_response.dialogue else 'empty'}...")
+                all_responses.append(ai_response)
+
+                # Send to WebSocket clients
+                await ws_manager.send_response(
+                    session_id,
+                    ai_response.role,
+                    ai_response.dialogue,
+                    inner_thought=ai_response.inner_thought,
+                )
+
+                # Decide next speaker
+                next_speaker = court_session.decide_next_speaker().lower()
+
+                # If Plaintiff's turn, break and let them speak
+                if next_speaker == "plaintiff":
+                    await ws_manager.send_next_speaker(session_id, "Plaintiff")
+                    break
+
+                # Check for verdict in AI loop
+                if next_speaker == "verdict":
+                    logger.info(f"Session {session_id}: Verdict reached in AI loop after objection")
+                    verdict_response = court_session.process_ai_turn()
+
+                    await ws_manager.send_response(
+                        session_id,
+                        verdict_response.role,
+                        verdict_response.dialogue,
+                        inner_thought=verdict_response.inner_thought,
+                    )
+                    await ws_manager.send_next_speaker(session_id, "Verdict")
+
+                    # Complete session with transcript save
+                    service.complete_session(session_id, db)
+                    break
+
+        except Exception as ai_loop_error:
+            logger.error(f"Session {session_id}: Error in AI turn loop after objection: {ai_loop_error}", exc_info=True)
+            await ws_manager.send_error(session_id, f"AI processing error: {str(ai_loop_error)}")
+
+        service.save_session(session_id, db)
+
+        # Return the last AI response in HTTP response (fallback for when WebSocket fails)
+        if not all_responses:
+            logger.warning(f"Session {session_id}: No AI responses generated after objection")
+            return SendMessageResponse(
+                status="success",
+                feedback=plaintiff_feedback,
+                message="Waiting for court response...",
+            )
+
+        last_response = all_responses[-1]
+
+        return SendMessageResponse(
+            status="success",
+            feedback=plaintiff_feedback,
+            ai_response=SchemaResponse(
+                role=last_response.role,
+                dialogue=last_response.dialogue,
+                inner_thought=last_response.inner_thought,
+                evidence_request=None,
+            ),
+        )
     except Exception as e:
-        logger.error(f"Error continuing after objection: {e}")
+        logger.error(f"Error continuing after objection: {e}", exc_info=True)
+        await ws_manager.send_error(session_id, str(e))
         raise
 
 

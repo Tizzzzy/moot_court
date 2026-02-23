@@ -73,6 +73,7 @@ class CourtroomAgents:
         - Provide clear legal reasoning (cite rule/procedure)
         - Suggest specific rephrasing to cure the defect
         - Be strategic: not every minor issue warrants objection
+        - Be realistic: only flag moderate and severe legitimate objection
         - If statement is acceptable, set has_objection to false
 
         Return a structured ObjectionDecision with all required fields.

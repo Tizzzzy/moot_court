@@ -182,6 +182,20 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
           }));
         }
 
+        // ---> FIX: Catch the objection before trying to parse an AI response <---
+        if (response.status === "objection_raised" && response.objection) {
+          setState((s) => ({
+            ...s,
+            isLoading: false, // Stop loading, wait for user input
+          }));
+          
+          return {
+            hasObjection: true,
+            objection: response.objection,
+            feedback: response.feedback,
+          };
+        }
+
         // Handle AI response from HTTP response (fallback when WebSocket fails)
         // Only add if not already present (WebSocket may have already added it)
         if (response.ai_response) {
@@ -224,6 +238,37 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to send message";
+        setState((s) => ({
+          ...s,
+          error: errorMessage,
+          isLoading: false,
+        }));
+        throw error;
+      }
+    },
+    [state.sessionId, state.messages]
+  );
+
+  /**
+   * Continue trial after ignoring an objection.
+   */
+  const continueAfterObjection = useCallback(
+    async (useOriginal: boolean = true, message?: string) => {
+      if (!state.sessionId) return;
+
+      setState((s) => ({ ...s, isLoading: true, error: null }));
+
+      try {
+        // Pass the message (original or rephrased) along with the flag
+        await courtSessionService.continueAfterObjection(state.sessionId, useOriginal, message);
+
+        setState((s) => ({
+          ...s,
+          isLoading: false,
+        }));
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to continue after objection";
         setState((s) => ({
           ...s,
           error: errorMessage,
@@ -433,5 +478,6 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     sendMessage,
     uploadEvidence,
     endSession,
+    continueAfterObjection,
   };
 }

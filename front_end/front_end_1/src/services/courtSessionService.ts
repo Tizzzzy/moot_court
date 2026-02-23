@@ -68,13 +68,15 @@ class CourtSessionService {
    */
   async continueAfterObjection(
     sessionId: string,
-    useOriginal: boolean
-  ): Promise<{ status: string }> {
+    useOriginal: boolean,
+    message?: string
+  ): Promise<SendMessageResponse> {
     const request: ContinueAfterObjectionRequest = {
       use_original: useOriginal,
+      message,
     };
 
-    return apiClient.post<{ status: string }>(
+    return apiClient.post<SendMessageResponse>(
       `${this.basePath}/sessions/${sessionId}/objections/continue`,
       request
     );

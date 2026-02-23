@@ -23,6 +23,7 @@ class ContinueAfterObjectionRequest(BaseModel):
     """Request to continue after objection (with or without rephrase)."""
 
     use_original: bool  # True = use original, False = already rephrased
+    message: Optional[str] = None  # Original or rephrased plaintiff statement
 
 
 class EvidenceRequestModel(BaseModel):
