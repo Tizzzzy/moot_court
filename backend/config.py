@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     BASE_DATA_DIR: Optional[str] = None  # Will default in path_utils if not set
     MAX_UPLOAD_SIZE_MB: int = 50
 
+    # Authentication
+    SECRET_KEY: str = "change-this-in-production"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
+
     class Config:
         env_file = ".env"
         case_sensitive = True

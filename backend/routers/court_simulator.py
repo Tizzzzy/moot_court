@@ -1,10 +1,11 @@
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, File, UploadFile, Form
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Query
 from sqlalchemy.orm import Session
 import json
 
 from backend.database import get_db
+from backend.models.user import User
 from backend.schemas.court_schemas import (
     CreateSessionRequest,
     CreateSessionResponse,
@@ -23,6 +24,7 @@ from backend.schemas.court_schemas import (
 from backend.services.court_session_service import CourtSessionService
 from backend.services.evidence_service import EvidenceService
 from backend.websockets.court_ws import ws_manager
+from backend.utils.auth_utils import get_current_user, decode_access_token
 from pathlib import Path
 import os
 from backend.utils.path_utils import get_extracted_data_path, get_user_evidence_dir
@@ -102,15 +104,19 @@ async def get_case_data(user_id: str = "user_1", case_id: int = 1):
 async def create_session(
     request: CreateSessionRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Create a new court simulator session.
+    Requires authentication.
 
     Returns the session ID and the Judge's opening statement.
     """
     try:
+        # Use authenticated user's ID
+        effective_user_id = current_user.id
         service = get_session_service()
-        result = service.create_session(request.user_id, request.case_id, db)
+        result = service.create_session(effective_user_id, request.case_id, db)
 
         # Notify frontend that turn is now Plaintiff's
         await ws_manager.send_next_speaker(result["session_id"], "Plaintiff")
@@ -163,6 +169,9 @@ async def send_plaintiff_message(
 
         if not court_session:
             raise ValueError(f"Session {session_id} not found")
+
+        # Track if session was completed to avoid double-save
+        session_completed = False
 
         # Check for objections (if enabled)
         if ENABLE_OBJECTIONS:
@@ -235,8 +244,10 @@ async def send_plaintiff_message(
             await ws_manager.send_next_speaker(session_id, "Verdict")
 
             # Mark trial as complete and save transcript
+            session_completed = True
             service.complete_session(session_id, db)
-            service.save_session(session_id, db)
+            # Note: complete_session already removes session from cache,
+            # so we don't call save_session here
 
             return SendMessageResponse(
                 status="verdict",
@@ -294,6 +305,7 @@ async def send_plaintiff_message(
                     await ws_manager.send_next_speaker(session_id, "Verdict")
 
                     # Complete session with transcript save
+                    session_completed = True
                     service.complete_session(session_id, db)
                     break
 
@@ -302,7 +314,8 @@ async def send_plaintiff_message(
             # Still try to return what we have
             await ws_manager.send_error(session_id, f"AI processing error: {str(ai_loop_error)}")
 
-        service.save_session(session_id, db)
+        if not session_completed:
+            service.save_session(session_id, db)
 
         # Return the last AI response in HTTP response (fallback for when WebSocket fails)
         # Use the last response for the HTTP return
@@ -350,6 +363,9 @@ async def continue_after_objection(
 
         if not court_session:
             raise ValueError(f"Session {session_id} not found")
+
+        # Track if session was completed to avoid double-save
+        session_completed = False
 
         # Finalize plaintiff turn with the message (original or rephrased)
         if request.message:
@@ -403,8 +419,10 @@ async def continue_after_objection(
             await ws_manager.send_next_speaker(session_id, "Verdict")
 
             # Mark trial as complete and save transcript
+            session_completed = True
             service.complete_session(session_id, db)
-            service.save_session(session_id, db)
+            # Note: complete_session already removes session from cache,
+            # so we don't call save_session here
 
             return SendMessageResponse(
                 status="verdict",
@@ -461,6 +479,7 @@ async def continue_after_objection(
                     await ws_manager.send_next_speaker(session_id, "Verdict")
 
                     # Complete session with transcript save
+                    session_completed = True
                     service.complete_session(session_id, db)
                     break
 
@@ -468,7 +487,8 @@ async def continue_after_objection(
             logger.error(f"Session {session_id}: Error in AI turn loop after objection: {ai_loop_error}", exc_info=True)
             await ws_manager.send_error(session_id, f"AI processing error: {str(ai_loop_error)}")
 
-        service.save_session(session_id, db)
+        if not session_completed:
+            service.save_session(session_id, db)
 
         # Return the last AI response in HTTP response (fallback for when WebSocket fails)
         if not all_responses:
@@ -627,6 +647,7 @@ async def websocket_endpoint(
     session_id: str,
     websocket: WebSocket,
     db: Session = Depends(get_db),
+    token: Optional[str] = Query(None),
 ):
     """
     WebSocket endpoint for real-time court simulator updates.
@@ -636,7 +657,16 @@ async def websocket_endpoint(
     - Next speaker notifications
     - Evidence request alerts
     - Error messages
+
+    Token passed as query param for authentication.
     """
+    # Validate token if provided
+    if token:
+        payload = decode_access_token(token)
+        if payload is None:
+            await websocket.close(code=4001, reason="Invalid or expired token")
+            return
+
     await ws_manager.connect(session_id, websocket)
 
     # Send connection confirmation

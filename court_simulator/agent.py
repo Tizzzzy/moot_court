@@ -4,6 +4,7 @@ import os
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
 import logging
+import time
 
 class PlaintiffFeedback(BaseModel):
     """Structured feedback for plaintiff statement"""
@@ -49,6 +50,8 @@ class CourtroomAgents:
         Defendant evaluates plaintiff's statement for legal objections.
         Returns structured objection decision with reasoning and rephrasing suggestions.
         """
+        logging.info("-----------------------------Objection check!!!!!!------------------------------")
+        start_time = time.time()
         case_context = json.dumps(case_data)
         history_context = json.dumps(history[-5:]) if len(history) > 5 else json.dumps(history)
 
@@ -91,6 +94,7 @@ class CourtroomAgents:
                     "response_json_schema": ObjectionDecision.model_json_schema(),
                 },
             )
+            logging.info(f"Objection evaluation took {time.time() - start_time:.2f} seconds")
             return ObjectionDecision.model_validate_json(response.text)
         except Exception as e:
             print(f"Objection evaluation error: {e}")
@@ -111,6 +115,8 @@ class CourtroomAgents:
         Provides structured educational feedback on plaintiff's statement.
         Returns JSON with what went well and areas for improvement.
         """
+        logging.info("-----------------------------Here!!!!!!------------------------------")
+        start_time = time.time()
         history_context = json.dumps(history[-5:]) if len(history) > 5 else json.dumps(history)
 
         system_instruction = f"""
@@ -144,6 +150,7 @@ Return ONLY valid JSON, nothing else.
                     "response_json_schema": PlaintiffFeedback.model_json_schema(),
                 }
             )
+            logging.info(f"Feedback generation took {time.time() - start_time:.2f} seconds")
             return PlaintiffFeedback.model_validate_json(response.text)
         except Exception as e:
             print(f"Feedback generation error: {e}")
@@ -214,7 +221,6 @@ Return structured ObjectionDecision with educational reasoning.
         Determines the next speaker using structured JSON output.
         Returns a ControllerDecision object with only next_speaker.
         """
-        logging.info("-----------------------------Here!!!!!!------------------------------")
         # Simplify context for the token limit
         context = json.dumps(history[-10:]) if len(history) > 10 else json.dumps(history)
 
@@ -244,7 +250,6 @@ Return structured ObjectionDecision with educational reasoning.
             )
             # Validate and parse JSON automatically
             decision = ControllerDecision.model_validate_json(response.text)
-            logging.info(f"---------------------------Controller Decision: {decision}------------------------")
             return decision
 
         except Exception as e:

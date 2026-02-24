@@ -1,12 +1,16 @@
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException, UploadFile, Depends
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.orm import Session
+from backend.database import get_db
+from backend.models.user import User
 from backend.config import settings
 from backend.services.openai_evidence import recommend_evidence, create_evidence_folders
 from backend.services.evidence_analysis import evidence_feedback as analyze_evidence_file
 from backend.utils.path_utils import get_user_ocr_output_dir, get_user_evidence_dir
+from backend.utils.auth_utils import get_optional_user
 
 router = APIRouter()
 
@@ -34,11 +38,19 @@ class CaseDataInput(BaseModel):
 
 
 @router.post("/submit-case/{user_id}")
-def submit_case_data(user_id: str, case_data: CaseDataInput):
+def submit_case_data(
+    user_id: str,
+    case_data: CaseDataInput,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
     """
     Accept manually entered case data from the frontend form,
     save it as extracted_data.json, and generate evidence recommendations.
     """
+    # Use authenticated user_id if available, otherwise use path user_id
+    effective_user_id = current_user.id if current_user else user_id
+
     # Convert to dict for JSON storage
     data_dict = case_data.model_dump()
 
@@ -47,15 +59,15 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
     data_dict["defendants"] = [{"name": d.name, "address": d.address} for d in case_data.defendants]
 
     # Create OCR output directory and save extracted data
-    ocr_output_dir = get_user_ocr_output_dir(user_id)
+    ocr_output_dir = get_user_ocr_output_dir(effective_user_id)
     json_path = ocr_output_dir / "extracted_data.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data_dict, f, indent=4, ensure_ascii=False)
 
-    print(f"[CASE] Saved case data for user {user_id}: {json_path}")
+    print(f"[CASE] Saved case data for user {effective_user_id}: {json_path}")
 
     # Generate evidence recommendations using Gemini
-    evidence_dir = get_user_evidence_dir(user_id)
+    evidence_dir = get_user_evidence_dir(effective_user_id)
     conversation_path = evidence_dir / "evidence_conversation.json"
 
     try:
@@ -75,28 +87,35 @@ def submit_case_data(user_id: str, case_data: CaseDataInput):
 
     return {
         "success": True,
-        "user_id": user_id,
+        "user_id": effective_user_id,
         "recommendations": evidence_dict,
         "message": "Case data saved and evidence recommendations generated"
     }
 
 
 @router.get("/recommend/{user_id}")
-def get_evidence_recommendations(user_id: str):
+def get_evidence_recommendations(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
     """
     Read extracted case data, call Gemini to recommend evidence,
     create folder structure, and return the recommendations.
     """
+    # Use authenticated user_id if available, otherwise use path user_id
+    effective_user_id = current_user.id if current_user else user_id
+
     # Load case data
-    json_path = get_user_ocr_output_dir(user_id) / "extracted_data.json"
+    json_path = get_user_ocr_output_dir(effective_user_id) / "extracted_data.json"
     if not json_path.exists():
-        raise HTTPException(404, f"No extracted data found for user {user_id}")
+        raise HTTPException(404, f"No extracted data found for user {effective_user_id}")
 
     with open(json_path, "r", encoding="utf-8") as f:
         case_data = json.load(f)
 
     # Check if recommendations already exist
-    evidence_dir = Path(settings.BASE_DATA_DIR) / user_id / "evidence"
+    evidence_dir = get_user_evidence_dir(effective_user_id)
     conversation_path = evidence_dir / "evidence_conversation.json"
 
     if conversation_path.exists():

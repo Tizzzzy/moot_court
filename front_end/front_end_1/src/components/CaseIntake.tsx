@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -71,6 +72,7 @@ export interface CaseData {
 
 export function CaseIntake() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<'status' | 'method' | 'upload' | 'form'>('status');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -119,12 +121,8 @@ export function CaseIntake() {
     setIsAnalyzing(true);
 
     try {
-      // Generate or retrieve user_id
-      let userId = localStorage.getItem('moot_court_user_id');
-      if (!userId) {
-        userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('moot_court_user_id', userId);
-      }
+      // Get user ID from auth context
+      const userId = user!.userId;
 
       // Upload PDF
       const { job_id } = await apiClient.uploadPdf(file, userId);
@@ -252,12 +250,8 @@ export function CaseIntake() {
       return;
     }
 
-    // Save user ID to localStorage (generate if not exists)
-    let userId = localStorage.getItem('moot_court_user_id');
-    if (!userId) {
-      userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('moot_court_user_id', userId);
-    }
+    // Get user ID from auth context
+    const userId = user!.userId;
 
     setIsSubmitting(true);
 

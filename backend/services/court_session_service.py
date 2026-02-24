@@ -119,6 +119,15 @@ class CourtSessionService:
         Save session state to database.
         """
         if session_id not in self._session_cache:
+            # Check if already completed — safe to skip
+            db_session = (
+                db.query(CourtSessionModel)
+                .filter(CourtSessionModel.session_id == session_id)
+                .first()
+            )
+            if db_session and db_session.status == "completed":
+                logger.info(f"Session {session_id}: Already completed, skipping save")
+                return
             raise ValueError(f"Session {session_id} not found in cache")
 
         court_session = self._session_cache[session_id]

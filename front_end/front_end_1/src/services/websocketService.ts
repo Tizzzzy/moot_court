@@ -44,7 +44,12 @@ class WebSocketService {
 
     return new Promise((resolve, reject) => {
       try {
-        const wsUrl = `${this.baseUrl}/court/sessions/${sessionId}/ws`;
+        // Get auth token and add as query param
+        const token = localStorage.getItem('auth_token');
+        let wsUrl = `${this.baseUrl}/court/sessions/${sessionId}/ws`;
+        if (token) {
+          wsUrl += `?token=${encodeURIComponent(token)}`;
+        }
         this.websocket = new WebSocket(wsUrl);
 
         this.websocket.onopen = () => {

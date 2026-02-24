@@ -6,6 +6,14 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
 
+/**
+ * Get authorization headers with JWT token.
+ */
+function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem("auth_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -22,6 +30,7 @@ class ApiClient {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
     });
 
@@ -37,6 +46,7 @@ class ApiClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     });
@@ -53,6 +63,7 @@ class ApiClient {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
       },
     });
 
@@ -71,6 +82,9 @@ class ApiClient {
 
     const response = await fetch(url, {
       method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+      },
       body: formData,
     });
 
@@ -130,6 +144,9 @@ apiClient.uploadPdf = async function(file: File, userId: string) {
 
   const response = await fetch(`${API_BASE_URL}/ocr/upload`, {
     method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: formData,
   });
 
@@ -138,13 +155,21 @@ apiClient.uploadPdf = async function(file: File, userId: string) {
 };
 
 apiClient.pollJobStatus = async function(jobId: string) {
-  const response = await fetch(`${API_BASE_URL}/ocr/status/${jobId}`);
+  const response = await fetch(`${API_BASE_URL}/ocr/status/${jobId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
   if (!response.ok) throw new Error('Failed to get job status');
   return response.json();
 };
 
 apiClient.getCase = async function(caseId: string) {
-  const response = await fetch(`${API_BASE_URL}/cases/${caseId}`);
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
   if (!response.ok) throw new Error('Failed to get case');
   return response.json();
 };
@@ -178,7 +203,9 @@ export interface AnalysisResult {
 }
 
 export async function fetchCaseData(userId: string): Promise<CaseData> {
-  const res = await fetch(`${API_BASE_URL}/case-data/${userId}`);
+  const res = await fetch(`${API_BASE_URL}/case-data/${userId}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to fetch case data: ${res.statusText}`);
   return res.json();
 }
@@ -186,7 +213,9 @@ export async function fetchCaseData(userId: string): Promise<CaseData> {
 export async function fetchEvidenceRecommendations(
   userId: string
 ): Promise<EvidenceRecommendation[]> {
-  const res = await fetch(`${API_BASE_URL}/evidence/recommend/${userId}`);
+  const res = await fetch(`${API_BASE_URL}/evidence/recommend/${userId}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok)
     throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
   const data = await res.json();
@@ -209,7 +238,11 @@ export async function uploadEvidenceFile(
 
   const res = await fetch(
     `${API_BASE_URL}/evidence/upload/${userId}/${folderName}`,
-    { method: "POST", body: formData }
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: formData,
+    }
   );
   if (!res.ok) throw new Error(`Failed to upload file: ${res.statusText}`);
   return res.json();
@@ -221,7 +254,10 @@ export async function analyzeEvidence(
 ): Promise<AnalysisResult[]> {
   const res = await fetch(
     `${API_BASE_URL}/evidence/analyze/${userId}/${folderName}`,
-    { method: "POST" }
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    }
   );
   if (!res.ok) throw new Error(`Failed to analyze evidence: ${res.statusText}`);
   const data = await res.json();
@@ -262,6 +298,7 @@ export async function submitCaseData(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getAuthHeaders(),
     },
     body: JSON.stringify(caseData),
   });

@@ -202,6 +202,18 @@ export function ActiveHearing({
           <div ref={messagesEndRef} />
         </div>
 
+        {verdictIssued && (
+          <div className="mt-8 bg-[#f0f7ff] border border-[#155dfc] rounded-[14px] p-6 text-center">
+            <h3 className="text-lg font-semibold text-[#0f172b] mb-2">Trial Concluded</h3>
+            <p className="text-[#64748b] text-sm mb-4">The judge has issued a verdict. Your session has been saved.</p>
+            <button
+              onClick={onBackToDashboard}
+              className="bg-[#155dfc] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#1248c7] transition-colors"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        )}
 
         {/* Tips Box */}
         {showTips && (

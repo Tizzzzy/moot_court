@@ -1,16 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import logging
 
 # Configure logging to show INFO level
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-from backend.routers import ocr, cases, court_simulator
-from backend.routers import ocr, cases, evidence, case_data
+from backend.routers import ocr, cases, court_simulator, evidence, case_data, auth
 from backend.database import engine, Base
 from backend.config import settings
 from backend.utils.path_utils import validate_path_config
+from backend.models import user as user_model  # Ensure users table is created
 
 
 @asynccontextmanager
@@ -39,6 +41,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+
+# Global exception handler to ensure CORS headers are included in error responses
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception(f"Unhandled exception on {request.method} {request.url}: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error. Check backend logs."},
+    )
+
+
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
@@ -49,6 +62,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ocr.router, prefix="/api/ocr", tags=["OCR"])
 app.include_router(cases.router, prefix="/api/cases", tags=["Cases"])
 app.include_router(court_simulator.router, prefix="/api/court", tags=["Court Simulator"])
