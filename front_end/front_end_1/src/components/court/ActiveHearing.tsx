@@ -5,6 +5,7 @@ import { ChatInput } from './ChatInput';
 import { TipsBox } from './TipsBox';
 import { EvidenceMessage } from './EvidenceMessage';
 import { PerformanceReport } from './PerformanceReport';
+import { UserProfileButton } from '@/components/UserProfileButton';
 import { useEffect, useRef } from 'react';
 
 interface ActiveHearingProps {
@@ -145,14 +146,15 @@ export function ActiveHearing({
     <div className="min-h-screen flex flex-col pb-32">
       {/* Header - Sticky */}
       <div className="sticky top-0 z-40 bg-white border-b border-[#e2e8f0] shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center justify-between">
           <button
             onClick={onBackToDashboard}
-            className="flex items-center gap-2 text-[#0a0a0a] mb-4 hover:text-[#155dfc] transition-colors"
+            className="flex items-center gap-2 text-[#0a0a0a] hover:text-[#155dfc] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to case dashboard</span>
           </button>
+          <UserProfileButton />
         </div>
       </div>
 

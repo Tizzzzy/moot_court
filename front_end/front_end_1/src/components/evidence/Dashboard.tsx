@@ -1,5 +1,6 @@
 import { Calendar, Sparkles } from "lucide-react";
 import type { CaseData, EvidenceRecommendation } from "../../services/api";
+import { UserProfileButton } from "@/components/UserProfileButton";
 
 interface UploadedFile {
   id: string;
@@ -59,13 +60,16 @@ export function Dashboard({
     <div className="min-h-screen bg-[#f8fafc]">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(0,0,0,0.1)] shadow-sm">
-        <div className="max-w-7xl mx-auto px-8 md:px-12 py-6">
-          <h1 className="text-[20px] font-normal text-[#0a0a0a] tracking-[-0.4492px]">
-            Case Dashboard
-          </h1>
-          <p className="text-[14px] text-[#4a5565] tracking-[-0.1504px] mt-1">
-            We'll help you prepare step by step
-          </p>
+        <div className="max-w-7xl mx-auto px-8 md:px-12 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-[20px] font-normal text-[#0a0a0a] tracking-[-0.4492px]">
+              Case Dashboard
+            </h1>
+            <p className="text-[14px] text-[#4a5565] tracking-[-0.1504px] mt-1">
+              We'll help you prepare step by step
+            </p>
+          </div>
+          <UserProfileButton />
         </div>
       </div>
 

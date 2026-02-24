@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { UserProfileButton } from './UserProfileButton';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -301,6 +302,7 @@ export function CaseIntake() {
               <p className="font-normal leading-[28px] text-[#0a0a0a] text-[20px] tracking-[-0.4492px]">Small Claims Court Prep</p>
               <p className="font-normal leading-[20px] text-[#4a5565] text-[14px] tracking-[-0.1504px]">We'll help you prepare step by step</p>
             </div>
+            <UserProfileButton />
           </div>
         </div>
       </div>
