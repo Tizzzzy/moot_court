@@ -50,4 +50,7 @@ npm install
 
 # Start development server (with HMR)
 npm run dev        # Runs on http://localhost:3000
+npm run dev -- --host 0.0.0.0 --port 3000
 ```
+
+http://3.135.62.13:3000
