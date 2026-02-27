@@ -32,7 +32,8 @@ class PartyInfo(BaseModel):
 
 class SmallClaimsCaseExtraction(BaseModel):
     case_number: Optional[str] = Field(default=None, description="Case number if stamped/assigned")
-    case_type: str = Field(description="Type: Torts, Fraud, Breach of contract, Personal injury motor vehicle, Property damage, Personal injury subrogation")
+    case_type: str = Field(description="Type: contract, property, debt, landlord-tenant, personal-injury, and other")
+    # case_type: str = Field(description="Type: Contract Dispute, Property Damage, Debt Collection, Landlord-Tenant, Personal Injury, and Other")
     state: str = Field(description="State abbreviation (e.g., CA, NY)")
     county: Optional[str] = Field(default=None, description="County inferred from court/addresses")
     filing_date: Optional[str] = Field(default=None, description="Filing date in YYYY-MM-DD format")

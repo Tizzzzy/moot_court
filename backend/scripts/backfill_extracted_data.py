@@ -44,6 +44,7 @@ def backfill_user_data(user_id: str) -> bool:
             "case_number": case.case_number,
             "case_type": case.case_type,
             "state": case.state,
+            "county": case.county,
             "filing_date": case.filing_date.isoformat() if case.filing_date else None,
             "hearing_date": None,  # Not stored in current schema
             "plaintiffs": plaintiffs,

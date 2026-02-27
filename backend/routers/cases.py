@@ -19,6 +19,7 @@ def get_case(case_id: int, db: Session = Depends(get_db)):
         "case_number": case.case_number,
         "case_type": case.case_type,
         "state": case.state,
+        "county": case.county,
         "filing_date": case.filing_date.isoformat() if case.filing_date else None,
         "claim_summary": case.claim_summary,
         "amount_sought": float(case.amount_sought) if case.amount_sought else None,

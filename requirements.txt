@@ -1,0 +1,12 @@
+google-genai
+nodejs
+numpy
+openai
+pandas
+uvicorn
+fastapi
+sqlalchemy
+pydantic-settings
+python-jose
+python-multipart
+psycopg2-binary

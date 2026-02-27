@@ -34,6 +34,7 @@ conda activate moot_court
 
 # Start backend with auto-reload
 python -m uvicorn backend.main:app --reload --port 8000
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### Frontend Development

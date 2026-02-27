@@ -41,6 +41,7 @@ class Case(Base):
     case_number = Column(String(100))
     case_type = Column(String(100), nullable=False)
     state = Column(String(50), nullable=False)
+    county = Column(String(50))
     filing_date = Column(Date)
     claim_summary = Column(Text, nullable=False)
     amount_sought = Column(DECIMAL(10, 2))

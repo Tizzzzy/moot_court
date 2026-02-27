@@ -146,7 +146,7 @@ export function CaseIntake() {
               caseNumber: caseData.case_number || '',
               caseType: caseData.case_type,
               state: caseData.state,
-              county: '',
+              county: caseData.county || '',
               plaintiffName: caseData.plaintiffs[0]?.name || '',
               plaintiffAddress: caseData.plaintiffs[0]?.address || '',
               defendantName: caseData.defendants[0]?.name || '',
