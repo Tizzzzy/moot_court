@@ -55,7 +55,14 @@ async def global_exception_handler(request: Request, exc: Exception):
 # CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://3.135.62.13:3000",
+        "http://3.135.62.13:5173",
+        "http://3.135.62.13",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
