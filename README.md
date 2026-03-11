@@ -53,4 +53,24 @@ npm run dev        # Runs on http://localhost:3000
 npm run dev -- --host 0.0.0.0 --port 3000
 ```
 
+## AWS tutorial
+front_end/front_end_1/vite.config.ts
+target: 'http://3.135.62.13:8000',
+
+front_end/front_end_1/.env.development
+VITE_API_BASE_URL=http://3.135.62.13:8000/api
+
+ssh -i "tizzyec.pem" ec2-user@3.135.62.13
+
+tmux attach -t backend
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+tmux attach -t frontend
+chmod +x node_modules/.bin/vite
+npm run build
+npm install
+npm run dev -- --host 0.0.0.0 --port 3000
+
+database: export DATABASE_URL='postgresql://moot_admin:Shudong1234!@localhost:5432/moot_court_db'
+
 http://3.135.62.13:3000

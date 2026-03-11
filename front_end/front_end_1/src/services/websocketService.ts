@@ -5,8 +5,24 @@
 
 import type { WSMessage } from "../types/court";
 
-const WS_BASE_URL =
-  import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8000/api";
+/**
+ * Derive the WebSocket base URL from environment variables.
+ * Prefers VITE_WS_BASE_URL if set, otherwise converts VITE_API_BASE_URL
+ * (http → ws, https → wss) so a single env var covers both transports.
+ */
+function resolveWsBaseUrl(): string {
+  if (import.meta.env.VITE_WS_BASE_URL) {
+    return import.meta.env.VITE_WS_BASE_URL as string;
+  }
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return (import.meta.env.VITE_API_BASE_URL as string)
+      .replace(/^http:/, "ws:")
+      .replace(/^https:/, "wss:");
+  }
+  return "ws://localhost:8000/api";
+}
+
+const WS_BASE_URL = resolveWsBaseUrl();
 
 type MessageHandler = (message: WSMessage) => void;
 type ConnectionHandler = (connected: boolean) => void;
