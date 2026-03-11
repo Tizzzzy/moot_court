@@ -70,6 +70,7 @@ export interface SendMessageResponse {
   feedback?: PlaintiffFeedback;
   message?: string;
   ai_response?: CourtroomResponse;
+  verdict_outcome?: string | null;
 }
 
 export interface SessionState {
@@ -77,6 +78,7 @@ export interface SessionState {
   current_speaker: string;
   turn_number: number;
   history: Message[];
+  verdict_outcome?: string | null;
 }
 
 export interface CreateSessionResponse {
@@ -136,6 +138,7 @@ export interface WSResponseData extends CourtroomResponse {}
 
 export interface WSNextSpeakerData {
   speaker: string;
+  verdict_outcome?: string;
 }
 
 export interface WSEvidenceRequestData {
@@ -182,6 +185,7 @@ export interface CourtSessionState {
   currentSpeaker: string;
   turnNumber: number;
   verdictIssued: boolean;
+  verdictOutcome: string | null;
   messages: ChatMessage[];
   isLoading: boolean;
   error: string | null;

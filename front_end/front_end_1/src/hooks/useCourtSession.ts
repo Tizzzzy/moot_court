@@ -36,6 +36,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     currentSpeaker: "judge",
     turnNumber: 0,
     verdictIssued: false,
+    verdictOutcome: null,
     messages: [],
     isLoading: false,
     error: null,
@@ -226,10 +227,20 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
           });
         }
 
-        setState((s) => ({
-          ...s,
-          isLoading: false,
-        }));
+        // Handle verdict from HTTP response (fallback when WebSocket is slow)
+        if (response.status === "verdict") {
+          setState((s) => ({
+            ...s,
+            verdictIssued: true,
+            verdictOutcome: response.verdict_outcome || s.verdictOutcome,
+            isLoading: false,
+          }));
+        } else {
+          setState((s) => ({
+            ...s,
+            isLoading: false,
+          }));
+        }
 
         return {
           hasObjection: false,
@@ -341,6 +352,51 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
   }, [state.sessionId]);
 
   /**
+   * Load a historical session (read-only mode).
+   */
+  const loadSession = useCallback(async (sessionId: string) => {
+    setState((s) => ({ ...s, isLoading: true, error: null }));
+
+    try {
+      // Get session state from server
+      const response = await courtSessionService.getSessionState(sessionId);
+
+      // Convert to ChatMessage format
+      const messages: ChatMessage[] = response.history.map((msg: any) => ({
+        id: generateId(),
+        speaker: mapSpeakerName(msg.role || "judge"),
+        text: msg.content || msg.text || "",
+        timestamp: new Date(),
+        isUser: (msg.role || "").toLowerCase() === "plaintiff",
+        feedback: msg.feedback,
+      }));
+
+      setState((s) => ({
+        ...s,
+        sessionId,
+        messages,
+        currentSpeaker: response.current_speaker || "Verdict",
+        turnNumber: response.turn_number || 0,
+        status: "completed", // Historical sessions are always completed
+        verdictIssued: true, // Historical sessions always have verdicts
+        verdictOutcome: response.verdict_outcome || null,
+        isLoading: false,
+      }));
+
+      // Connect WebSocket for this session (won't send messages though)
+      await websocketService.connect(sessionId);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to load session";
+      setState((s) => ({
+        ...s,
+        error: errorMessage,
+        isLoading: false,
+      }));
+    }
+  }, []);
+
+  /**
    * Set up WebSocket handlers when component mounts.
    */
   useEffect(() => {
@@ -383,18 +439,10 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
               msg.speaker === mapSpeakerName(response.role)
           );
 
-          // Check if this is a verdict
-          const isVerdict = response.role.toLowerCase() === "verdict" ||
-            (response.role.toLowerCase() === "judge" &&
-             (response.dialogue.toLowerCase().includes("verdict") ||
-              response.dialogue.toLowerCase().includes("i find for") ||
-              response.dialogue.toLowerCase().includes("judgment for")));
-
           if (alreadyExists) {
             return {
               ...s,
               currentSpeaker: response.role,
-              verdictIssued: isVerdict,
               isLoading: false,
             };
           }
@@ -411,21 +459,25 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
             ...s,
             messages: [...s.messages, chatMsg],
             currentSpeaker: response.role,
-            verdictIssued: isVerdict,
             isLoading: false,
           };
         });
         break;
       }
 
-      case "next_speaker":
-        const nextSpeaker = message.data as { speaker: string };
+      case "next_speaker": {
+        const nextSpeaker = message.data as { speaker: string; verdict_outcome?: string };
+        const isVerdictSpeaker = nextSpeaker.speaker === "Verdict";
         setState((s) => ({
           ...s,
           currentSpeaker: nextSpeaker.speaker,
-          verdictIssued: nextSpeaker.speaker === "Verdict",
+          verdictIssued: isVerdictSpeaker,
+          verdictOutcome: isVerdictSpeaker && nextSpeaker.verdict_outcome
+            ? nextSpeaker.verdict_outcome
+            : s.verdictOutcome,
         }));
         break;
+      }
 
       case "error": {
         const errorData = message.data as { message: string };
@@ -475,6 +527,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     // Actions
     startSession,
     restoreSession,
+    loadSession,
     sendMessage,
     uploadEvidence,
     endSession,

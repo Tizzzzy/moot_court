@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from backend.models.case import CourtSessionModel, Case
 from court_simulator.session import CourtSession
 from backend.utils.path_utils import get_user_evidence_dir
+from backend.config import settings
 
 
 class CourtSessionService:
@@ -25,7 +26,7 @@ class CourtSessionService:
     """
 
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = settings.GEMINI_API_KEY
         # In-memory cache for active sessions
         self._session_cache: Dict[str, CourtSession] = {}
 
@@ -49,10 +50,10 @@ class CourtSessionService:
         if not case:
             raise ValueError(f"Case {case_id} not found")
 
-        # Create evidence directory
+        # Create evidence directory (per-session to avoid cross-session contamination)
         session_id = str(uuid.uuid4())
         evidence_dir = get_user_evidence_dir(user_id)
-        evidence_submit_dir = str(evidence_dir / "court_submitted")
+        evidence_submit_dir = str(evidence_dir / f"court_submitted_{session_id}")
         os.makedirs(evidence_submit_dir, exist_ok=True)
 
         case_data = self._case_to_dict(case)
@@ -70,6 +71,13 @@ class CourtSessionService:
         # Update current_speaker to Plaintiff after Judge opens
         court_session.current_speaker = "Plaintiff"
 
+        # Count existing sessions for this user to generate title
+        session_count = (
+            db.query(CourtSessionModel)
+            .filter(CourtSessionModel.user_id == user_id)
+            .count()
+        )
+
         # Store in database
         db_session = CourtSessionModel(
             session_id=session_id,
@@ -78,6 +86,7 @@ class CourtSessionService:
             status="active",
             current_speaker="Plaintiff",  # After Judge opens, Plaintiff presents case first
             turn_number=1,
+            title=f"Practice Session #{session_count + 1}",
             state_snapshot=self._serialize_session(court_session),
         )
         db.add(db_session)
@@ -153,20 +162,37 @@ class CourtSessionService:
         if not court_session:
             return None
 
+        # Fetch verdict_outcome from DB (only stored there, not in CourtSession object)
+        db_session = (
+            db.query(CourtSessionModel)
+            .filter(CourtSessionModel.session_id == session_id)
+            .first()
+        )
+        verdict_outcome = db_session.verdict_outcome if db_session else None
+
         return {
             "session_id": session_id,
             "current_speaker": court_session.current_speaker,
             "turn_number": court_session.turn_number,
             "history": [self._response_to_dict(msg) for msg in court_session.history],
+            "verdict_outcome": verdict_outcome,
         }
 
-    def complete_session(self, session_id: str, db: Session) -> None:
+    def complete_session(
+        self,
+        session_id: str,
+        db: Session,
+        verdict_outcome: Optional[str] = None,
+        title: Optional[str] = None,
+    ) -> None:
         """
         Mark session as completed and save transcript.
 
         Args:
             session_id: Session identifier
             db: Database session
+            verdict_outcome: 'win', 'lose', or None
+            title: Session title (e.g., "Practice Session #1")
         """
         # Get session from cache BEFORE deleting it
         court_session = self._session_cache.get(session_id)
@@ -190,6 +216,10 @@ class CourtSessionService:
             court_session.save_transcript(str(transcript_path))
             logger.info(f"Session {session_id}: Transcript saved to {transcript_path}")
 
+        # Update state_snapshot with final history (ensures Judge's last message is persisted)
+        if court_session and db_session:
+            db_session.state_snapshot = self._serialize_session(court_session)
+
         # Remove from cache
         if session_id in self._session_cache:
             del self._session_cache[session_id]
@@ -197,6 +227,20 @@ class CourtSessionService:
         # Update database status
         if db_session:
             db_session.status = "completed"
+            if verdict_outcome:
+                # Normalize 'loss' -> 'lose' for frontend compatibility
+                normalized_outcome = 'lose' if verdict_outcome == 'loss' else verdict_outcome
+                db_session.verdict_outcome = normalized_outcome
+            if title:
+                db_session.title = title
+            else:
+                # Auto-generate title if not provided
+                session_count = (
+                    db.query(CourtSessionModel)
+                    .filter(CourtSessionModel.user_id == db_session.user_id)
+                    .count()
+                )
+                db_session.title = f"Practice Session #{session_count}"
             db.commit()
 
     def _case_to_dict(self, case: Case) -> Dict[str, Any]:

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { HearingOverview } from './HearingOverview';
 import { ActiveHearing } from './ActiveHearing';
 import { EvidenceModal, type EvidenceItem } from './EvidenceModal';
@@ -8,7 +8,8 @@ import { EvidenceSidePanel } from './EvidenceSidePanel';
 import { FilePreviewModal } from './FilePreviewModal';
 import { useCourtSession } from '@/hooks/useCourtSession';
 import type { ChatMessage, ObjectionDecision } from '@/types/court';
-import { fetchEvidenceRecommendations } from '@/services/api';
+import { fetchEvidenceRecommendations, fetchDashboardSummary } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { AlertTriangle } from 'lucide-react';
 
 export interface CaseData {
@@ -69,9 +70,15 @@ function mapChatMessageToMessage(chatMsg: ChatMessage): Message {
 export function CourtPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user, logout } = useAuth();
   const USER_ID = userId || 'user_1';
 
-  const courtSession = useCourtSession(USER_ID, 1);
+  const sessionIdParam = searchParams.get('sessionId');
+  const caseIdParam = searchParams.get('caseId');
+  const caseId = caseIdParam ? parseInt(caseIdParam, 10) : 1;
+
+  const courtSession = useCourtSession(USER_ID, caseId);
 
   const [caseData, setCaseData] = useState<CaseData | null>(null);
   const [currentScreen, setCurrentScreen] = useState<'overview' | 'hearing'>('overview');
@@ -89,32 +96,51 @@ export function CourtPage() {
   const [userEvidence, setUserEvidence] = useState<EvidenceItem[]>([]);
   const [pendingObjection, setPendingObjection] = useState<ObjectionDecision | null>(null);
   const [pendingObjectionMsg, setPendingObjectionMsg] = useState<string>('');
+  const [tokensUsed, setTokensUsed] = useState(0);
+  const [tokenLimit, setTokenLimit] = useState(3000);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-        // Load case data
-        const caseResponse = await fetch(`${baseUrl}/court/case-data?user_id=${USER_ID}`);
+        // Load case data — pass case_id so the backend returns the selected case
+        const caseResponse = await fetch(`${baseUrl}/court/case-data?user_id=${USER_ID}&case_id=${caseId}`);
         if (caseResponse.ok) {
           const data = await caseResponse.json();
           setCaseData(data);
         }
 
-        // Load user's evidence from dashboard
+        // Load token usage
         try {
-          const evidenceRecs = await fetchEvidenceRecommendations(USER_ID);
-          // Fetch status for each evidence category
+          const summary = await fetchDashboardSummary(USER_ID);
+          setTokensUsed(summary.tokens_used ?? 0);
+          setTokenLimit(summary.token_limit ?? 3000);
+        } catch {
+          // Fall back to auth context values if available
+          if (user?.tokensUsed !== undefined) setTokensUsed(user.tokensUsed);
+          if (user?.tokenLimit !== undefined) setTokenLimit(user.tokenLimit);
+        }
+
+        // Load user's evidence from dashboard (case-specific)
+        try {
+          const evidenceRecs = await fetch(`${baseUrl}/evidence/for-case/${caseId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` }
+          }).then(r => r.ok ? r.json() : { recommendations: {} }).then(d => {
+            const recs: Record<string, string> = d.recommendations ?? {};
+            return Object.entries(recs).map(([key, desc]) => ({ title: key.replace(/_/g, ' '), folderName: key.replace(/[^a-zA-Z0-9_-]/g, ''), description: desc as string }));
+          });
+          // Fetch status for each evidence category (case-specific)
           const evidenceWithStatus = await Promise.all(
             evidenceRecs.map(async (rec) => {
               try {
-                const statusRes = await fetch(`${baseUrl}/evidence/status/${USER_ID}/${rec.folderName}`);
-                const statusData = statusRes.ok ? await statusRes.json() : { hasFiles: false, isReady: false };
+                const statusRes = await fetch(`${baseUrl}/evidence/status/${USER_ID}?case_id=${caseId}`);
+                const statusData = statusRes.ok ? await statusRes.json() : { status: {} };
+                const folderStatus = statusData.status?.[rec.folderName];
                 return {
                   title: rec.title,
                   folderName: rec.folderName,
-                  isReady: statusData.isReady || false
+                  isReady: folderStatus?.is_ready || false
                 };
               } catch {
                 return { title: rec.title, folderName: rec.folderName, isReady: false };
@@ -129,8 +155,16 @@ export function CourtPage() {
         console.error('Failed to load case data:', error);
       }
     };
-    loadData();
-  }, [USER_ID]);
+
+    // If sessionIdParam is present, load historical session instead
+    if (sessionIdParam) {
+      courtSession.loadSession(sessionIdParam);
+      setCurrentScreen('hearing');
+      setCurrentStep(1 as HearingStep);
+    } else {
+      loadData();
+    }
+  }, [USER_ID, sessionIdParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStartHearing = async () => {
     setCurrentScreen('hearing');
@@ -212,7 +246,13 @@ export function CourtPage() {
   };
 
   const handleBackToDashboard = () => {
-    navigate(`/dashboard/${USER_ID}`);
+    // Return to the dashboard with the current caseId so the correct case stays selected
+    navigate(`/dashboard/${USER_ID}?caseId=${caseId}`);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   const messages: Message[] = courtSession.messages.map(mapChatMessageToMessage);
@@ -242,6 +282,10 @@ export function CourtPage() {
           onStartHearing={handleStartHearing}
           caseData={caseData}
           onBackToDashboard={handleBackToDashboard}
+          tokensUsed={tokensUsed}
+          tokenLimit={tokenLimit}
+          username={user?.username ?? ''}
+          onLogout={handleLogout}
         />
       )}
 
@@ -302,6 +346,11 @@ export function CourtPage() {
           caseData={caseData}
           currentSpeaker={courtSession.currentSpeaker}
           verdictIssued={courtSession.verdictIssued}
+          verdictOutcome={courtSession.verdictOutcome}
+          tokensUsed={tokensUsed}
+          tokenLimit={tokenLimit}
+          username={user?.username ?? ''}
+          onLogout={handleLogout}
         />
       )}
 

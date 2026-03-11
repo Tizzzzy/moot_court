@@ -21,6 +21,7 @@ interface EvidenceUploadProps {
   evidenceIndex: number | null;
   evidenceCategory: EvidenceRecommendation | null;
   userId: string;
+  caseId?: number | null;
   onUpdate?: (index: number, hasFiles: boolean, analyzed: boolean, files: UploadedFile[], status: "ready" | "needs-improvement" | "none") => void;
   onClose?: () => void;
   initialFiles?: UploadedFile[];
@@ -32,6 +33,7 @@ export default function EvidenceUpload({
   evidenceIndex,
   evidenceCategory,
   userId,
+  caseId,
   onUpdate,
   onClose,
   initialFiles = [],
@@ -97,12 +99,12 @@ export default function EvidenceUpload({
       for (const file of uploadedFiles) {
         const rawFile = rawFilesRef.current.get(file.id);
         if (rawFile) {
-          await uploadEvidenceFile(userId, folderName, rawFile);
+          await uploadEvidenceFile(userId, folderName, rawFile, caseId);
         }
       }
 
       // Analyze all files in the folder
-      const results = await analyzeEvidence(userId, folderName);
+      const results = await analyzeEvidence(userId, folderName, caseId);
 
       // Map results back to uploaded files
       setUploadedFiles((prev) =>

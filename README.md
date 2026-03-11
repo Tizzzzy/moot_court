@@ -44,7 +44,7 @@ Open another terminal
 ```bash
 # Navigate to main frontend
 cd front_end/front_end_1
-
+npm run build
 # Install dependencies (first time only)
 npm install
 

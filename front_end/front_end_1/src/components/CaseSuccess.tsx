@@ -187,11 +187,11 @@ export function CaseSuccess() {
             Your case preparation journey begins here. We'll help you prepare step by step.
           </p>
           <Button
-            onClick={() => navigate(`/evidence/${userId}`)}
+            onClick={() => navigate(`/dashboard/${userId}`)}
             className="w-full"
             size="lg"
           >
-            Continue to Evidence Collection
+            Continue to Dashboard
           </Button>
         </div>
       </Card>

@@ -154,6 +154,40 @@ def get_extracted_data_path(user_id: str) -> Path:
     return get_user_ocr_output_dir(user_id) / "extracted_data.json"
 
 
+def get_case_extracted_data_path(user_id: str, case_id: int) -> Path:
+    """
+    Get the path to case-specific extracted data JSON.
+
+    Returns:
+        Path to {base_data_dir}/{user_id}/ocr_output/case_{case_id}_extracted_data.json
+    """
+    return get_user_ocr_output_dir(user_id) / f"case_{case_id}_extracted_data.json"
+
+
+def get_case_evidence_dir(user_id: str, case_id: int) -> Path:
+    """
+    Get the evidence directory for a specific case.
+
+    Returns:
+        Path to {base_data_dir}/{user_id}/evidence/case_{case_id}/ (created if doesn't exist)
+    """
+    case_evidence_path = get_user_evidence_dir(user_id) / f"case_{case_id}"
+    case_evidence_path.mkdir(parents=True, exist_ok=True)
+    return case_evidence_path
+
+
+def get_case_recommend_evidence_dir(user_id: str, case_id: int) -> Path:
+    """
+    Get the recommend_evidence directory for a specific case (used for uploads/analysis).
+
+    Returns:
+        Path to {base_data_dir}/{user_id}/evidence/case_{case_id}/recommend_evidence/
+    """
+    rec_path = get_case_evidence_dir(user_id, case_id) / "recommend_evidence"
+    rec_path.mkdir(parents=True, exist_ok=True)
+    return rec_path
+
+
 def validate_path_config() -> dict:
     """
     Validate path configuration on startup.

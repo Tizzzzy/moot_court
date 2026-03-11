@@ -10,6 +10,7 @@ class PlaintiffFeedback(BaseModel):
     """Structured feedback for plaintiff statement"""
     did_well: str = Field(description="What the plaintiff did well in their statement")
     improvements: List[str] = Field(description="List of specific areas for improvement (2-3 items)")
+    tokens_used: Optional[int] = Field(description="Number of tokens used by Gemini API.", default=None)
 
 class ObjectionDecision(BaseModel):
     """Defendant's evaluation of plaintiff statement for objections"""
@@ -18,6 +19,7 @@ class ObjectionDecision(BaseModel):
     legal_reasoning: str = Field(description="Legal/procedural basis for the objection")
     suggested_rephrasing: Optional[str] = Field(description="How plaintiff should rephrase to avoid objection", default=None)
     severity: Literal['minor', 'moderate', 'severe'] = Field(default='moderate', description="Severity level of the objection")
+    tokens_used: Optional[int] = Field(description="Number of tokens used by Gemini API.", default=None)
 
 class EvidenceRequest(BaseModel):
     """Judge's explicit request for evidence"""
@@ -27,12 +29,17 @@ class EvidenceRequest(BaseModel):
 
 class ControllerDecision(BaseModel):
     next_speaker: Literal['Judge', 'Defendant', 'Plaintiff', 'Verdict'] = Field(description="The role selected to speak next.")
+    tokens_used: Optional[int] = Field(description="Number of tokens used by Gemini API.", default=None)
+
+class VerdictDecision(BaseModel):
+    decision: Literal['win', 'lose'] = Field(description="The final verdict for plaintiff.")
 
 class CourtroomResponse(BaseModel):
     role: str = Field(description="The role of the speaker (e.g., Judge, Defendant).")
     dialogue: str = Field(description="The actual spoken words/response to the court.")
     inner_thought: Optional[str] = Field(description="The agent's internal reasoning or legal strategy.", default=None)
     citations: Optional[List[str]] = Field(description="List of legal precedents or evidence references if applicable.", default=None)
+    tokens_used: Optional[int] = Field(description="Number of tokens used by Gemini API.", default=None)
 
 class CourtroomAgents:
     def __init__(self, api_key):
@@ -95,7 +102,11 @@ class CourtroomAgents:
                 },
             )
             logging.info(f"Objection evaluation took {time.time() - start_time:.2f} seconds")
-            return ObjectionDecision.model_validate_json(response.text)
+            decision = ObjectionDecision.model_validate_json(response.text)
+            # Capture token count if available
+            if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                decision.tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
+            return decision
         except Exception as e:
             print(f"Objection evaluation error: {e}")
             # Fallback: no objection
@@ -151,7 +162,11 @@ Return ONLY valid JSON, nothing else.
                 }
             )
             logging.info(f"Feedback generation took {time.time() - start_time:.2f} seconds")
-            return PlaintiffFeedback.model_validate_json(response.text)
+            feedback = PlaintiffFeedback.model_validate_json(response.text)
+            # Capture token count if available
+            if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                feedback.tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
+            return feedback
         except Exception as e:
             print(f"Feedback generation error: {e}")
             # Return fallback feedback
@@ -215,6 +230,39 @@ Return structured ObjectionDecision with educational reasoning.
                 has_objection=False,
                 legal_reasoning="Educational analysis unavailable"
             )
+        
+    def detect_verdict_outcome(self, history) -> VerdictDecision:
+        """
+        Reviews the verdict
+        Returns a VerdictDecision indicating 'win' or 'loss' for the plaintiff.
+        """
+        verdict = json.dumps(history[-1])
+
+        prompt = f"""
+        Verdict: {verdict}
+
+        TASK:
+        - If Judge has made a clear final decision in favor of plaintiff, return "win".
+        - If Judge has made a clear final decision against plaintiff, return "lose".
+        - If no clear verdict yet, return "lose" (indicating plaintiff has not won).
+
+        Return only the decision field as JSON.
+        """
+
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt,
+                config={
+                    "response_mime_type": "application/json",
+                    "response_json_schema": VerdictDecision.model_json_schema(),
+                },
+            )
+            return VerdictDecision.model_validate_json(response.text)
+        except Exception as e:
+            print(f"Verdict detection error: {e}")
+            # Default to loss if we can't determine
+            return VerdictDecision(decision="lose")
 
     def get_controller_decision(self, history) -> ControllerDecision:
         """
@@ -250,6 +298,9 @@ Return structured ObjectionDecision with educational reasoning.
             )
             # Validate and parse JSON automatically
             decision = ControllerDecision.model_validate_json(response.text)
+            # Capture token count if available
+            if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                decision.tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
             return decision
 
         except Exception as e:
@@ -375,6 +426,10 @@ Challenge evidence credibility, point out inconsistencies, or argue insufficient
             # CRITICAL FIX: Override role to match input parameter
             # Gemini may set role based on context instead of parameter
             courtroom_response.role = role
+
+            # Capture token count if available
+            if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                courtroom_response.tokens_used = getattr(response.usage_metadata, 'total_token_count', 0)
 
             return courtroom_response
 

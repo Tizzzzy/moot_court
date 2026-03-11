@@ -59,6 +59,7 @@
       open: true,
       proxy: {
         '/api': {
+          // target: 'http://localhost:8000',
           target: 'http://3.135.62.13:8000',
           changeOrigin: true,
         },

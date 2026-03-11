@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.models.case import ProcessingJob, Case, Party, JobStatus
 from backend.config import settings
-from backend.utils.path_utils import get_user_ocr_output_dir
+from backend.utils.path_utils import get_user_ocr_output_dir, get_case_extracted_data_path
 
 
 def parse_date(date_string):
@@ -99,6 +99,12 @@ def run_ocr_pipeline(job_id: str, file_path: str, user_id: str):
             json.dump(output_data, f, indent=4, default=str)
 
         print(f"[OCR] Saved extracted data to: {json_output_path}")
+
+        # Save case-specific extracted data for per-case evidence recommendations
+        case_specific_path = get_case_extracted_data_path(user_id, case.id)
+        with open(case_specific_path, "w", encoding="utf-8") as f:
+            json.dump(output_data, f, indent=4, default=str)
+        print(f"[OCR] Saved case-specific extracted data to: {case_specific_path}")
 
         # Update job
         job.status = JobStatus.COMPLETED

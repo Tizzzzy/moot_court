@@ -49,6 +49,8 @@ class Case(Base):
     demand_letter_sent = Column(Boolean, default=False)
     agreement_included = Column(Boolean, default=False)
     status = Column(String(20), default="draft")
+    alias = Column(String(255))
+    hearing_date = Column(String(50))
     created_at = Column(DateTime, server_default=func.now())
 
     parties = relationship("Party", back_populates="case", cascade="all, delete-orphan")
@@ -80,6 +82,8 @@ class CourtSessionModel(Base):
     evidence_upload_allowed = Column(Boolean, default=False)
 
     state_snapshot = Column(Text)  # JSON serialized CourtSession state
+    verdict_outcome = Column(String(20))  # win, lose, or null
+    title = Column(String(255))  # e.g. "Practice Session #1"
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, onupdate=func.now())

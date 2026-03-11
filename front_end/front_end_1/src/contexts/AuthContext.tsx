@@ -5,6 +5,8 @@ interface User {
   userId: string;
   username: string;
   email: string;
+  tokensUsed?: number;
+  tokenLimit?: number;
 }
 
 interface AuthContextType {
@@ -12,8 +14,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  register: (data: RegisterRequest) => Promise<void>;
-  login: (data: LoginRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<AuthResponse>;
+  login: (data: LoginRequest) => Promise<AuthResponse>;
+  loginWithGoogle: (response: AuthResponse) => void;
   logout: () => void;
 }
 
@@ -39,6 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userId: userInfo.user_id,
           username: userInfo.username,
           email: userInfo.email,
+          tokensUsed: userInfo.tokens_used,
+          tokenLimit: userInfo.token_limit,
         });
         setError(null);
       } catch (err) {
@@ -55,12 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     validateToken();
   }, []);
 
-  const register = async (data: RegisterRequest) => {
+  const register = async (data: RegisterRequest): Promise<AuthResponse> => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await authService.register(data);
       handleAuthResponse(response);
+      return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
@@ -70,12 +76,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (data: LoginRequest) => {
+  const login = async (data: LoginRequest): Promise<AuthResponse> => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await authService.login(data);
       handleAuthResponse(response);
+      return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
@@ -85,19 +92,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = (response: AuthResponse) => {
+    handleAuthResponse(response);
+  };
+
   const handleAuthResponse = (response: AuthResponse) => {
     // Store token
     localStorage.setItem('auth_token', response.access_token);
 
-    // Store user info
-    const userData = {
+    // Store user info with default token values
+    const userData: User = {
       userId: response.user_id,
       username: response.username,
       email: response.email,
+      tokensUsed: 0,
+      tokenLimit: 3000,
     };
     localStorage.setItem('auth_user', JSON.stringify(userData));
 
     setUser(userData);
+
+    // Fetch fresh user info with token counts
+    authService
+      .getMe()
+      .then((userInfo) => {
+        setUser({
+          userId: userInfo.user_id,
+          username: userInfo.username,
+          email: userInfo.email,
+          tokensUsed: userInfo.tokens_used,
+          tokenLimit: userInfo.token_limit,
+        });
+      })
+      .catch((err) => console.error('Failed to fetch user info:', err));
   };
 
   const logout = () => {
@@ -117,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error,
         register,
         login,
+        loginWithGoogle,
         logout,
       }}
     >

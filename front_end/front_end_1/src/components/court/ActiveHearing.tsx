@@ -26,6 +26,11 @@ interface ActiveHearingProps {
   caseData?: CaseData | null;
   currentSpeaker?: string;
   verdictIssued?: boolean;
+  verdictOutcome?: string | null;
+  tokensUsed?: number;
+  tokenLimit?: number;
+  username?: string;
+  onLogout?: () => void;
 }
 
 const stepTitles: Record<HearingStep, string> = {
@@ -77,10 +82,19 @@ export function ActiveHearing({
   editingMessage,
   caseData,
   currentSpeaker = "Plaintiff",
-  verdictIssued
+  verdictIssued,
+  verdictOutcome,
+  tokensUsed = 0,
+  tokenLimit = 3000,
+  username = '',
+  onLogout,
 }: ActiveHearingProps) {
   const progress = (currentStep / 7) * 100;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const tokensRemaining = tokenLimit - tokensUsed;
+  const percentageUsed = Math.round((tokensUsed / tokenLimit) * 100);
+  const barColor = tokensUsed >= tokenLimit * 0.9 ? 'bg-red-500' : 'bg-green-500';
   
   // Find the last user message index
   const lastUserMessageIndex = messages.map((m, i) => ({ ...m, index: i }))
@@ -146,15 +160,35 @@ export function ActiveHearing({
     <div className="min-h-screen flex flex-col pb-32">
       {/* Header - Sticky */}
       <div className="sticky top-0 z-40 bg-white border-b border-[#e2e8f0] shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
           <button
             onClick={onBackToDashboard}
-            className="flex items-center gap-2 text-[#0a0a0a] hover:text-[#155dfc] transition-colors"
+            className="flex items-center gap-2 text-[#0a0a0a] hover:text-[#155dfc] transition-colors flex-shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">Back to case dashboard</span>
           </button>
-          <UserProfileButton />
+
+          {/* Token Progress Card */}
+          <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 w-56 flex-shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-medium text-gray-700">Tokens available</span>
+              <span className="text-xs font-semibold text-gray-900">
+                {tokensRemaining.toLocaleString()}/{tokenLimit.toLocaleString()}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all ${barColor}`}
+                style={{ width: `${Math.min(percentageUsed, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {username && <span className="text-sm font-medium text-gray-900">{username}</span>}
+            <UserProfileButton />
+          </div>
         </div>
       </div>
 
@@ -207,6 +241,12 @@ export function ActiveHearing({
         {verdictIssued && (
           <div className="mt-8 bg-[#f0f7ff] border border-[#155dfc] rounded-[14px] p-6 text-center">
             <h3 className="text-lg font-semibold text-[#0f172b] mb-2">Trial Concluded</h3>
+            {verdictOutcome === 'win' && (
+              <p className="text-[#00a63e] font-semibold text-base mb-1">You Won!</p>
+            )}
+            {(verdictOutcome === 'lose' || verdictOutcome === 'loss') && (
+              <p className="text-[#f54900] font-semibold text-base mb-1">You Lost</p>
+            )}
             <p className="text-[#64748b] text-sm mb-4">The judge has issued a verdict. Your session has been saved.</p>
             <button
               onClick={onBackToDashboard}

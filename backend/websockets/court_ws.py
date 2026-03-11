@@ -73,13 +73,16 @@ class WebSocketManager:
         }
         await self.broadcast(session_id, message)
 
-    async def send_next_speaker(self, session_id: str, speaker: str):
+    async def send_next_speaker(self, session_id: str, speaker: str, verdict_outcome: str = None):
         """
         Notify clients of the next speaker.
         """
+        data: Dict[str, Any] = {"speaker": speaker}
+        if verdict_outcome is not None:
+            data["verdict_outcome"] = verdict_outcome
         message = {
             "type": "next_speaker",
-            "data": {"speaker": speaker},
+            "data": data,
         }
         await self.broadcast(session_id, message)
 

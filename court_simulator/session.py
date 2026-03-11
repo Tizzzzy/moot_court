@@ -109,6 +109,14 @@ class CourtSession:
         self.current_speaker = decision.next_speaker
         return decision.next_speaker
 
+    def detect_verdict_outcome(self) -> str:
+        """
+        Detect verdict outcome using AI analysis of the trial history.
+        Returns 'win' or 'loss' for the plaintiff.
+        """
+        result = self.agents.detect_verdict_outcome(self.history)
+        return result.decision
+
     def get_plaintiff_feedback(self, statement: str):
         """
         Generate educational feedback for plaintiff's statement.

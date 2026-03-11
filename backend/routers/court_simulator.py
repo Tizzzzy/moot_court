@@ -25,9 +25,10 @@ from backend.services.court_session_service import CourtSessionService
 from backend.services.evidence_service import EvidenceService
 from backend.websockets.court_ws import ws_manager
 from backend.utils.auth_utils import get_current_user, decode_access_token
+from backend.utils.token_tracker import record_tokens
 from pathlib import Path
 import os
-from backend.utils.path_utils import get_extracted_data_path, get_user_evidence_dir
+from backend.utils.path_utils import get_extracted_data_path, get_case_extracted_data_path, get_user_evidence_dir
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +73,16 @@ async def get_case_data(user_id: str = "user_1", case_id: int = 1):
     Returns the case information for the UI to display.
     """
     try:
-        case_file = get_extracted_data_path(user_id)
+        # Prefer case-specific extracted data; fall back to user-level file
+        case_file = get_case_extracted_data_path(user_id, case_id)
+        if not case_file.exists():
+            logger.warning(f"Case-specific file not found ({case_file}), falling back to user-level extracted_data.json")
+            case_file = get_extracted_data_path(user_id)
 
         if case_file.exists():
             with open(case_file, "r") as f:
                 case_data = json.load(f)
+            logger.info(f"Loaded case data for user={user_id} case_id={case_id} from {case_file}")
             return case_data
         else:
             logger.warning(f"Case file not found: {case_file}")
@@ -145,6 +151,7 @@ async def get_session_state(
         state = service.get_session_state(session_id, db)
         if not state:
             raise ValueError(f"Session {session_id} not found")
+        state.setdefault('evidence_upload_allowed', False)
         return SessionStateResponse(**state)
     except Exception as e:
         logger.error(f"Error getting session state: {e}")
@@ -156,6 +163,7 @@ async def send_plaintiff_message(
     session_id: str,
     request: SendMessageRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Send a plaintiff statement during the hearing.
@@ -172,6 +180,7 @@ async def send_plaintiff_message(
 
         # Track if session was completed to avoid double-save
         session_completed = False
+        total_tokens = 0
 
         # Check for objections (if enabled)
         if ENABLE_OBJECTIONS:
@@ -179,6 +188,12 @@ async def send_plaintiff_message(
             has_objection, objection_decision = objection_result
 
             if has_objection:
+                # Track tokens from objection decision
+                if hasattr(objection_decision, 'tokens_used') and objection_decision.tokens_used:
+                    total_tokens += objection_decision.tokens_used
+                # Record tokens if any were used
+                if total_tokens > 0:
+                    record_tokens(current_user.id, total_tokens, db)
                 return SendMessageResponse(
                     status="objection_raised",
                     objection=ObjectionDecision(**objection_decision.model_dump())
@@ -209,6 +224,9 @@ async def send_plaintiff_message(
                     positive=feedback_result.did_well,
                     improvements=feedback_result.improvements
                 )
+                # Track tokens from feedback
+                if hasattr(feedback_result, 'tokens_used') and feedback_result.tokens_used:
+                    total_tokens += feedback_result.tokens_used
                 logger.info(f"Session {session_id}: Generated feedback: {feedback_result.did_well[:50]}...")
                 # Send feedback via WebSocket for real-time update
                 await ws_manager.send_feedback(
@@ -226,38 +244,38 @@ async def send_plaintiff_message(
 
         # Decide first who should respond
         logger.info(f"Session {session_id}: Deciding next speaker...")
-        next_speaker = court_session.decide_next_speaker().lower()
+        next_speaker_response = court_session.decide_next_speaker()
+        next_speaker = next_speaker_response.lower() if isinstance(next_speaker_response, str) else next_speaker_response.next_speaker.lower()
+
+        # Track tokens from controller decision
+        if hasattr(next_speaker_response, 'tokens_used') and next_speaker_response.tokens_used:
+            total_tokens += next_speaker_response.tokens_used
+
         logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
 
-        # If verdict, generate final verdict message
+        # If verdict, notify frontend and complete session (verdict already delivered by Judge)
         if next_speaker == "verdict":
-            logger.info(f"Session {session_id}: Generating verdict message...")
-            verdict_response = court_session.process_ai_turn()
+            logger.info(f"Session {session_id}: Verdict reached")
 
-            # Send verdict via WebSocket
-            await ws_manager.send_response(
-                session_id,
-                verdict_response.role,
-                verdict_response.dialogue,
-                inner_thought=verdict_response.inner_thought,
-            )
-            await ws_manager.send_next_speaker(session_id, "Verdict")
+            # Detect verdict outcome using AI analysis
+            verdict_outcome = court_session.detect_verdict_outcome()
+            logger.info(f"Verdict outcome detected: {verdict_outcome}")
+
+            await ws_manager.send_next_speaker(session_id, "Verdict", verdict_outcome=verdict_outcome)
+
+            # Record tokens used
+            if total_tokens > 0:
+                record_tokens(current_user.id, total_tokens, db)
 
             # Mark trial as complete and save transcript
             session_completed = True
-            service.complete_session(session_id, db)
-            # Note: complete_session already removes session from cache,
-            # so we don't call save_session here
+            service.complete_session(session_id, db, verdict_outcome=verdict_outcome)
 
             return SendMessageResponse(
                 status="verdict",
+                verdict_outcome=verdict_outcome,
                 message="The trial has concluded.",
                 feedback=plaintiff_feedback,
-                ai_response=SchemaResponse(
-                    role=verdict_response.role,
-                    dialogue=verdict_response.dialogue,
-                    inner_thought=verdict_response.inner_thought,
-                ),
             )
 
         # Process AI turns until it's Plaintiff's turn or verdict
@@ -274,6 +292,10 @@ async def send_plaintiff_message(
                 logger.info(f"Session {session_id}: AI response from {ai_response.role}: {ai_response.dialogue[:50] if ai_response.dialogue else 'empty'}...")
                 all_responses.append(ai_response)
 
+                # Track tokens from AI response
+                if hasattr(ai_response, 'tokens_used') and ai_response.tokens_used:
+                    total_tokens += ai_response.tokens_used
+
                 # Send to WebSocket clients
                 await ws_manager.send_response(
                     session_id,
@@ -284,7 +306,12 @@ async def send_plaintiff_message(
 
 
                 # Decide next speaker
-                next_speaker = court_session.decide_next_speaker().lower()
+                next_speaker_response = court_session.decide_next_speaker()
+                next_speaker = next_speaker_response.lower() if isinstance(next_speaker_response, str) else next_speaker_response.next_speaker.lower()
+
+                # Track tokens from controller decision
+                if hasattr(next_speaker_response, 'tokens_used') and next_speaker_response.tokens_used:
+                    total_tokens += next_speaker_response.tokens_used
 
                 # If Plaintiff's turn, break and let them speak
                 if next_speaker == "plaintiff":
@@ -294,19 +321,20 @@ async def send_plaintiff_message(
                 # CRITICAL FIX: Check for verdict in AI loop
                 if next_speaker == "verdict":
                     logger.info(f"Session {session_id}: Verdict reached in AI loop")
-                    verdict_response = court_session.process_ai_turn()
 
-                    await ws_manager.send_response(
-                        session_id,
-                        verdict_response.role,
-                        verdict_response.dialogue,
-                        inner_thought=verdict_response.inner_thought,
-                    )
-                    await ws_manager.send_next_speaker(session_id, "Verdict")
+                    # Detect verdict outcome using AI analysis
+                    verdict_outcome = court_session.detect_verdict_outcome()
+                    logger.info(f"Verdict outcome detected: {verdict_outcome}")
+
+                    await ws_manager.send_next_speaker(session_id, "Verdict", verdict_outcome=verdict_outcome)
+
+                    # Record tokens used
+                    if total_tokens > 0:
+                        record_tokens(current_user.id, total_tokens, db)
 
                     # Complete session with transcript save
                     session_completed = True
-                    service.complete_session(session_id, db)
+                    service.complete_session(session_id, db, verdict_outcome=verdict_outcome)
                     break
 
         except Exception as ai_loop_error:
@@ -404,35 +432,25 @@ async def continue_after_objection(
         next_speaker = court_session.decide_next_speaker().lower()
         logger.info(f"Session {session_id}: Next speaker decided: {next_speaker}")
 
-        # If verdict, generate final verdict message
+        # If verdict, notify frontend and complete session (verdict already delivered by Judge)
         if next_speaker == "verdict":
-            logger.info(f"Session {session_id}: Generating verdict message after objection...")
-            verdict_response = court_session.process_ai_turn()
+            logger.info(f"Session {session_id}: Verdict reached after objection")
 
-            # Send verdict via WebSocket
-            await ws_manager.send_response(
-                session_id,
-                verdict_response.role,
-                verdict_response.dialogue,
-                inner_thought=verdict_response.inner_thought,
-            )
-            await ws_manager.send_next_speaker(session_id, "Verdict")
+            # Detect verdict outcome using AI analysis
+            verdict_outcome = court_session.detect_verdict_outcome()
+            logger.info(f"Verdict outcome detected: {verdict_outcome}")
+
+            await ws_manager.send_next_speaker(session_id, "Verdict", verdict_outcome=verdict_outcome)
 
             # Mark trial as complete and save transcript
             session_completed = True
-            service.complete_session(session_id, db)
-            # Note: complete_session already removes session from cache,
-            # so we don't call save_session here
+            service.complete_session(session_id, db, verdict_outcome=verdict_outcome)
 
             return SendMessageResponse(
                 status="verdict",
+                verdict_outcome=verdict_outcome,
                 message="The trial has concluded.",
                 feedback=plaintiff_feedback,
-                ai_response=SchemaResponse(
-                    role=verdict_response.role,
-                    dialogue=verdict_response.dialogue,
-                    inner_thought=verdict_response.inner_thought,
-                ),
             )
 
         # Process AI turns until it's Plaintiff's turn or verdict
@@ -468,19 +486,16 @@ async def continue_after_objection(
                 # Check for verdict in AI loop
                 if next_speaker == "verdict":
                     logger.info(f"Session {session_id}: Verdict reached in AI loop after objection")
-                    verdict_response = court_session.process_ai_turn()
 
-                    await ws_manager.send_response(
-                        session_id,
-                        verdict_response.role,
-                        verdict_response.dialogue,
-                        inner_thought=verdict_response.inner_thought,
-                    )
-                    await ws_manager.send_next_speaker(session_id, "Verdict")
+                    # Detect verdict outcome using AI analysis
+                    verdict_outcome = court_session.detect_verdict_outcome()
+                    logger.info(f"Verdict outcome detected: {verdict_outcome}")
+
+                    await ws_manager.send_next_speaker(session_id, "Verdict", verdict_outcome=verdict_outcome)
 
                     # Complete session with transcript save
                     session_completed = True
-                    service.complete_session(session_id, db)
+                    service.complete_session(session_id, db, verdict_outcome=verdict_outcome)
                     break
 
         except Exception as ai_loop_error:

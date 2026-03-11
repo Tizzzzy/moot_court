@@ -1,4 +1,5 @@
 google-genai
+google-auth
 nodejs
 numpy
 openai
@@ -10,3 +11,4 @@ pydantic-settings
 python-jose
 python-multipart
 psycopg2-binary
+google-auth

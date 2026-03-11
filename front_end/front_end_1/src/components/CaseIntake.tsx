@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserProfileButton } from './UserProfileButton';
 import { Card } from './ui/card';
@@ -74,12 +74,16 @@ export interface CaseData {
 export function CaseIntake() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState<'status' | 'method' | 'upload' | 'form'>('status');
+  const [searchParams] = useSearchParams();
+  const statusParam = searchParams.get('status') as 'filed' | 'pending' | null;
+
+  const [step, setStep] = useState<'status' | 'method' | 'upload' | 'form'>(statusParam ? 'method' : 'status');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [ocrCaseId, setOcrCaseId] = useState<number | null>(null);
   const [caseData, setCaseData] = useState<CaseData>({
-    status: null,
+    status: statusParam ?? null,
     entryMethod: null,
     caseNumber: '',
     caseType: '',
@@ -136,6 +140,9 @@ export function CaseIntake() {
 
           if (status.status === 'completed' && status.case_id) {
             clearInterval(pollInterval);
+
+            // Track the OCR-created case so we don't create a duplicate on submit
+            setOcrCaseId(status.case_id);
 
             // Fetch extracted case data
             const caseData = await apiClient.getCase(status.case_id);
@@ -264,6 +271,7 @@ export function CaseIntake() {
       };
 
       // Submit case data to backend for AI evidence recommendations
+      // Pass ocrCaseId if the case was already created by OCR to avoid duplicates
       await submitCaseData(userId, {
         case_number: caseData.caseNumber || null,
         case_type: caseData.caseType,
@@ -278,6 +286,7 @@ export function CaseIntake() {
         incident_date: formatDate(caseData.incidentDate || null),
         demand_letter_sent: false,
         agreement_included: false,
+        existing_case_id: ocrCaseId ?? undefined,
       });
 
       toast.success('Case information saved! Evidence recommendations generated.');
@@ -329,32 +338,9 @@ export function CaseIntake() {
         {/* Progress Indicator */}
         <div className="h-[36px] w-full flex items-center justify-center">
           <div className="flex gap-[8px] items-center justify-center">
-            {/* Step 1 */}
+            {/* Step 1: Entry Method */}
             <div className={`${
-              step === 'status' ? 'bg-[#dbeafe]' : 'bg-[#dcfce7]'
-            } h-[36px] rounded-full px-[16px] flex items-center gap-[8px]`}>
-              {step !== 'status' && (
-                <svg className="size-[16px]" fill="none" viewBox="0 0 16 16">
-                  <g clipPath="url(#clip0)">
-                    <path d={svgPathsMethod.p3eaa2980} stroke="#34C759" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33333" />
-                    <path d={svgPathsMethod.p1f2c5400} stroke="#34C759" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33333" />
-                  </g>
-                  <defs><clipPath id="clip0"><rect fill="white" height="16" width="16" /></clipPath></defs>
-                </svg>
-              )}
-              <p className={`font-normal leading-[20px] text-[14px] tracking-[-0.1504px] ${
-                step === 'status' ? 'text-[#0088FF]' : 'text-[#34c759]'
-              }`}>1. Case Status</p>
-            </div>
-
-            {/* Arrow */}
-            <svg className="size-[16px]" fill="none" viewBox="0 0 16 16">
-              <path d="M6 12L10 8L6 4" stroke="#99A1AF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33333" />
-            </svg>
-
-            {/* Step 2 */}
-            <div className={`${
-              step === 'method' || step === 'upload' ? 'bg-[#dbeafe]' : 
+              step === 'method' || step === 'upload' ? 'bg-[#dbeafe]' :
               step === 'form' ? 'bg-[#dcfce7]' : 'bg-[#f3f4f6]'
             } h-[36px] rounded-full px-[16px] flex items-center`}>
               {step === 'form' && (
@@ -369,7 +355,7 @@ export function CaseIntake() {
               <p className={`font-normal leading-[20px] text-[14px] tracking-[-0.1504px] ${
                 step === 'method' || step === 'upload' ? 'text-[#0088FF]' :
                 step === 'form' ? 'text-[#34c759]' : 'text-[#99a1af]'
-              }`}>2. Entry Method</p>
+              }`}>1. Entry Method</p>
             </div>
 
             {/* Arrow */}
@@ -377,88 +363,25 @@ export function CaseIntake() {
               <path d="M6 12L10 8L6 4" stroke="#99A1AF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.33333" />
             </svg>
 
-            {/* Step 3 */}
+            {/* Step 2: Case Details */}
             <div className={`${
               step === 'form' ? 'bg-[#dbeafe]' : 'bg-[#f3f4f6]'
             } h-[36px] rounded-full px-[16px] flex items-center`}>
               <p className={`font-normal leading-[20px] text-[14px] tracking-[-0.1504px] ${
                 step === 'form' ? 'text-[#0088FF]' : 'text-[#99a1af]'
-              }`}>3. Case Details</p>
+              }`}>2. Case Details</p>
             </div>
           </div>
         </div>
 
-        {/* Step 1: Status Selection */}
-        {step === 'status' && (
-          <div className="bg-white relative rounded-[14px] w-full border border-[rgba(0,0,0,0.1)]">
-            <div className="flex flex-col gap-[24px] items-start p-[25px]">
-              <div className="flex flex-col gap-[8px] items-start w-full">
-                <p className="font-medium leading-[32px] text-[#1e1e1e] text-[24px] tracking-[0.0703px]">What's your case status?</p>
-                <p className="font-normal leading-[24px] text-[#1e1e1e] text-[16px] tracking-[-0.3125px]">This helps us understand where you are in the process</p>
-              </div>
-
-              <div className="flex gap-[16px] items-start w-full">
-                {/* Officially Filed */}
-                <button
-                  onClick={() => handleStatusSelect('filed')}
-                  className="flex-1 h-[144px] relative rounded-[10px] border-2 border-[#e5e7eb] hover:border-[#0088FF] transition-colors"
-                >
-                  <div className="flex flex-col items-start pt-[26px] px-[26px] pb-[2px] h-full">
-                    <div className="flex gap-[16px] items-start pb-[24px] w-full">
-                      <div className="bg-[#dcfce7] relative rounded-[10px] size-[48px] flex items-center justify-center flex-shrink-0">
-                        <svg className="size-[24px]" fill="none" viewBox="0 0 24 24">
-                          <g>
-                            <path d={svgPathsStatus.p1f023100} stroke="#34C759" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                            <path d="M9 11L12 14L22 4" stroke="#34C759" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                          </g>
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-normal leading-[28px] text-[#1e1e1e] text-[20px] tracking-[-0.4492px] text-left mb-[8px]">Officially Filed</p>
-                        <p className="font-normal leading-[20px] text-[#1e1e1e] text-[14px] tracking-[-0.1504px] text-left mb-[14px]">I have a case number from the court</p>
-                        <div className="bg-[#dcfce7] border border-[rgba(0,0,0,0)] rounded-[8px] w-fit px-[8px] py-[3px]">
-                          <p className="font-medium leading-[16px] text-[#34c759] text-[12px]">Most Common</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
-                {/* Submitted/Pending */}
-                <button
-                  onClick={() => handleStatusSelect('pending')}
-                  className="flex-1 h-[144px] relative rounded-[10px] border-2 border-[#e5e7eb] hover:border-[#0088FF] transition-colors"
-                >
-                  <div className="flex flex-col items-start pt-[38.25px] px-[26px] pb-[2px] h-full">
-                    <div className="flex gap-[16px] items-start pb-[24px] w-full">
-                      <div className="bg-[#fef9c2] relative rounded-[10px] size-[48px] flex items-center justify-center flex-shrink-0">
-                        <svg className="size-[24px]" fill="none" viewBox="0 0 24 24">
-                          <g>
-                            <path d={svgPathsStatus.pace200} stroke="#FF8D28" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                            <path d="M12 8V12" stroke="#FF8D28" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                            <path d="M12 16H12.01" stroke="#FF8D28" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                          </g>
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-normal leading-[28px] text-[#1e1e1e] text-[20px] tracking-[-0.4492px] text-left mb-[8px]">Submitted/Pending</p>
-                        <p className="font-normal leading-[20px] text-[#1e1e1e] text-[14px] tracking-[-0.1504px] text-left">Waiting for court approval</p>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Data Entry Method */}
+        {/* Step 1: Data Entry Method */}
         {step === 'method' && (
           <div className="bg-white relative rounded-[14px] w-full border border-[rgba(0,0,0,0.1)]">
             <div className="flex flex-col gap-[24px] items-start p-[25px]">
               {/* Back Button */}
               <button
-                onClick={() => setStep('status')}
+                // onClick={() => navigate('/')}
+                onClick={() => navigate('/', { state: { forceShowLanding: true } })}
                 className="bg-white h-[36px] relative rounded-[8px] border border-[rgba(0,0,0,0.1)] px-[12px] hover:bg-gray-50 transition-colors"
               >
                 <p className="font-medium leading-[20px] text-[#0a0a0a] text-[14px] text-center tracking-[-0.1504px]">← Back</p>

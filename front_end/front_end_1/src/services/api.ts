@@ -228,16 +228,36 @@ export async function fetchEvidenceRecommendations(
   }));
 }
 
+export async function fetchEvidenceRecommendationsByCaseId(
+  caseId: number
+): Promise<EvidenceRecommendation[]> {
+  const res = await fetch(`${API_BASE_URL}/evidence/for-case/${caseId}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok)
+    throw new Error(`Failed to fetch recommendations for case: ${res.statusText}`);
+  const data = await res.json();
+  const recommendations: Record<string, string> = data.recommendations;
+
+  return Object.entries(recommendations).map(([key, description]) => ({
+    title: key.replace(/_/g, " "),
+    description,
+    folderName: key.replace(/[^a-zA-Z0-9_-]/g, ""),
+  }));
+}
+
 export async function uploadEvidenceFile(
   userId: string,
   folderName: string,
-  file: File
+  file: File,
+  caseId?: number | null
 ): Promise<{ filename: string; size: number }> {
   const formData = new FormData();
   formData.append("file", file);
 
+  const query = caseId != null ? `?case_id=${caseId}` : "";
   const res = await fetch(
-    `${API_BASE_URL}/evidence/upload/${userId}/${folderName}`,
+    `${API_BASE_URL}/evidence/upload/${userId}/${folderName}${query}`,
     {
       method: "POST",
       headers: getAuthHeaders(),
@@ -250,10 +270,12 @@ export async function uploadEvidenceFile(
 
 export async function analyzeEvidence(
   userId: string,
-  folderName: string
+  folderName: string,
+  caseId?: number | null
 ): Promise<AnalysisResult[]> {
+  const query = caseId != null ? `?case_id=${caseId}` : "";
   const res = await fetch(
-    `${API_BASE_URL}/evidence/analyze/${userId}/${folderName}`,
+    `${API_BASE_URL}/evidence/analyze/${userId}/${folderName}${query}`,
     {
       method: "POST",
       headers: getAuthHeaders(),
@@ -278,11 +300,14 @@ export interface SubmitCaseDataInput {
   incident_date?: string | null;
   demand_letter_sent: boolean;
   agreement_included: boolean;
+  /** If the case was already created by OCR, pass its id to avoid creating a duplicate. */
+  existing_case_id?: number;
 }
 
 export interface SubmitCaseDataResponse {
   success: boolean;
   user_id: string;
+  case_id?: number;
   recommendations: Record<string, string>;
   message: string;
 }
@@ -303,5 +328,105 @@ export async function submitCaseData(
     body: JSON.stringify(caseData),
   });
   if (!res.ok) throw new Error(`Failed to submit case data: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchDashboardSummary(userId: string) {
+  const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/summary`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch dashboard summary: ${res.statusText}`);
+  return res.json();
+}
+
+export interface EvidenceFolderStatus {
+  has_files: boolean;
+  file_count: number;
+  files: string[];
+  is_ready: boolean;
+  /** Per-file feedback keyed by file stem (no extension). "_all_" is used for legacy single-file feedback. */
+  file_feedbacks?: Record<string, string>;
+}
+
+export interface EvidenceStatusResponse {
+  status: Record<string, EvidenceFolderStatus>;
+}
+
+export async function fetchEvidenceStatus(
+  userId: string,
+  caseId?: number | null
+): Promise<EvidenceStatusResponse> {
+  const query = caseId != null ? `?case_id=${caseId}` : "";
+  const res = await fetch(`${API_BASE_URL}/evidence/status/${userId}${query}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch evidence status: ${res.statusText}`);
+  return res.json();
+}
+
+// ── Full case detail & update ─────────────────────────────────────────────────
+
+export interface FullCaseParty {
+  id: number;
+  name: string;
+  address: string | null;
+}
+
+export interface FullCaseData {
+  id: number;
+  user_id: string;
+  alias: string | null;
+  case_number: string | null;
+  case_type: string;
+  state: string;
+  county: string | null;
+  filing_date: string | null;
+  hearing_date: string | null;
+  claim_summary: string;
+  amount_sought: number | null;
+  incident_date: string | null;
+  demand_letter_sent: boolean;
+  agreement_included: boolean;
+  status: string;
+  plaintiffs: FullCaseParty[];
+  defendants: FullCaseParty[];
+  created_at: string;
+}
+
+export interface CaseUpdateInput {
+  alias?: string | null;
+  case_number?: string | null;
+  case_type?: string;
+  state?: string;
+  county?: string | null;
+  filing_date?: string | null;
+  hearing_date?: string | null;
+  claim_summary?: string;
+  amount_sought?: number | null;
+  incident_date?: string | null;
+  demand_letter_sent?: boolean;
+  agreement_included?: boolean;
+  plaintiffs?: { name: string; address?: string | null }[];
+  defendants?: { name: string; address?: string | null }[];
+}
+
+export async function fetchFullCase(caseId: number): Promise<FullCaseData> {
+  const res = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch case: ${res.statusText}`);
+  return res.json();
+}
+
+export async function updateCase(caseId: number, data: CaseUpdateInput): Promise<FullCaseData> {
+  const res = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to update case: ${res.statusText}`);
   return res.json();
 }

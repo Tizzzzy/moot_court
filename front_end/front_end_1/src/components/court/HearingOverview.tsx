@@ -1,10 +1,15 @@
 import { ArrowLeft } from 'lucide-react';
+import { UserProfileButton } from '@/components/UserProfileButton';
 import type { CaseData } from '../App';
 
 interface HearingOverviewProps {
   onStartHearing: () => void;
   caseData?: CaseData | null;
   onBackToDashboard?: () => void;
+  tokensUsed?: number;
+  tokenLimit?: number;
+  username?: string;
+  onLogout?: () => void;
 }
 
 const hearingSteps = [
@@ -15,20 +20,49 @@ const hearingSteps = [
   { id: 5, title: 'Judgment', description: 'The judge delivers their decision and explains the reasoning behind it.' },
 ];
 
-export function HearingOverview({ onStartHearing, caseData, onBackToDashboard }: HearingOverviewProps) {
+export function HearingOverview({ onStartHearing, caseData, onBackToDashboard, tokensUsed = 0, tokenLimit = 3000, username = '', onLogout }: HearingOverviewProps) {
+  const tokensRemaining = tokenLimit - tokensUsed;
+  const percentageUsed = Math.round((tokensUsed / tokenLimit) * 100);
+  const barColor = tokensUsed >= tokenLimit * 0.9 ? 'bg-red-500' : 'bg-green-500';
+
   return (
     <div className="min-h-screen bg-[#f9fafb]">
       {/* Header */}
       <div className="bg-white border-b border-[rgba(0,0,0,0.1)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)]">
-        <div className="max-w-[1344px] mx-auto px-12 py-4">
-          <button
-            onClick={onBackToDashboard}
-            className="flex gap-3 items-center px-3 py-1.5 rounded-lg mb-2 hover:bg-[#f8fafc] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-[#0a0a0a]" />
-            <span className="font-medium text-sm text-[#0a0a0a] tracking-[-0.15px]">Back to case dashboard</span>
-          </button>
-          <h1 className="font-semibold text-[28px] text-[#0f172b] leading-[36px] tracking-[-0.02em]">Practice Session</h1>
+        <div className="max-w-[1344px] mx-auto px-12 h-20 flex items-center justify-between">
+          {/* Left: back button + title */}
+          <div>
+            <button
+              onClick={onBackToDashboard}
+              className="flex gap-3 items-center px-3 py-1.5 rounded-lg mb-1 hover:bg-[#f8fafc] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#0a0a0a]" />
+              <span className="font-medium text-sm text-[#0a0a0a] tracking-[-0.15px]">Back to case dashboard</span>
+            </button>
+            <h1 className="font-semibold text-[20px] text-[#0f172b] leading-tight tracking-[-0.02em] pl-3">Practice Session</h1>
+          </div>
+
+          {/* Center: Token Progress Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 w-64 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Tokens available</span>
+              <span className="text-sm font-semibold text-gray-900">
+                {tokensRemaining.toLocaleString()}/{tokenLimit.toLocaleString()}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all ${barColor}`}
+                style={{ width: `${Math.min(percentageUsed, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Right: username + profile */}
+          <div className="flex items-center gap-2">
+            {username && <span className="text-sm font-medium text-gray-900">{username}</span>}
+            <UserProfileButton />
+          </div>
         </div>
       </div>
 

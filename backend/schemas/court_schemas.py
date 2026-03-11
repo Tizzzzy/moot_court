@@ -83,12 +83,13 @@ class Message(BaseModel):
 class SendMessageResponse(BaseModel):
     """Response after sending a plaintiff message."""
 
-    status: str  # 'success', 'objection_raised'
+    status: str  # 'success', 'objection_raised', 'verdict'
     objection: Optional[ObjectionDecision] = None
     feedback: Optional[PlaintiffFeedback] = None
     message: Optional[str] = None  # Optional explanatory message
     ai_response: Optional[CourtroomResponse] = None  # AI response (Judge/Defendant)
     evidence_upload_allowed: Optional[bool] = None  # Whether evidence upload is now allowed
+    verdict_outcome: Optional[str] = None  # 'win' or 'lose' when status is 'verdict'
 
 
 class SessionStateResponse(BaseModel):
@@ -99,6 +100,7 @@ class SessionStateResponse(BaseModel):
     turn_number: int
     evidence_upload_allowed: bool
     history: List[Dict[str, Any]]
+    verdict_outcome: Optional[str] = None
 
 
 class CreateSessionResponse(BaseModel):

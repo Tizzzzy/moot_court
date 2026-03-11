@@ -24,7 +24,8 @@
       "Bash(for f in *)",
       "Bash(npm run build:*)",
       "Bash(source activate:*)",
-      "Bash(pkill:*\\\\)"
+      "Bash(npm install:*)",
+      "Bash(sqlite3:*)"
     ]
   }
 }

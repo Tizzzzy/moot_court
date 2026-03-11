@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-from backend.routers import ocr, cases, court_simulator, evidence, case_data, auth
+from backend.routers import ocr, cases, court_simulator, evidence, case_data, auth, dashboard
 from backend.database import engine, Base
 from backend.config import settings
 from backend.utils.path_utils import validate_path_config
@@ -75,6 +75,7 @@ app.include_router(cases.router, prefix="/api/cases", tags=["Cases"])
 app.include_router(court_simulator.router, prefix="/api/court", tags=["Court Simulator"])
 app.include_router(evidence.router, prefix="/api/evidence", tags=["Evidence"])
 app.include_router(case_data.router, prefix="/api/case-data", tags=["Case Data"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 
 @app.get("/api/health")
