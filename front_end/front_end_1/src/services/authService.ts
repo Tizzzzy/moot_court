@@ -4,6 +4,7 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  otp: string;
 }
 
 export interface LoginRequest {
@@ -41,6 +42,42 @@ class AuthService {
     }
 
     return response.json();
+  }
+
+  async sendVerification(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/send-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to send verification code');
+    }
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to send reset code');
+    }
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, new_password: newPassword }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to reset password');
+    }
   }
 
   async login(data: LoginRequest): Promise<AuthResponse> {

@@ -146,7 +146,7 @@ export const LoginPage: React.FC = () => {
                   className="size-4 rounded border-gray-300" disabled={isLoading || isGoogleLoading} />
                 <span className="font-medium text-sm text-[#4a5565]">Remember me</span>
               </label>
-              <button type="button" className="font-medium text-sm text-[#155dfc] hover:underline" disabled={isLoading || isGoogleLoading}>
+              <button type="button" className="font-medium text-sm text-[#155dfc] hover:underline" onClick={() => navigate('/forgot-password')} disabled={isLoading || isGoogleLoading}>
                 Forgot password?
               </button>
             </div>

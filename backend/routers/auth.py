@@ -3,14 +3,21 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from google.auth.transport import requests
 from google.oauth2 import id_token
+from datetime import datetime, timedelta
 import os
 from backend.database import get_db
 from backend.models.user import User
+from backend.models.verification_token import VerificationToken
 from backend.utils.auth_utils import (
     hash_password,
     verify_password,
     create_access_token,
     get_current_user,
+)
+from backend.services.email_service import (
+    generate_otp,
+    send_verification_email,
+    send_password_reset_email,
 )
 
 router = APIRouter(tags=["authentication"])
@@ -20,6 +27,25 @@ class RegisterRequest(BaseModel):
     username: str
     email: str
     password: str
+    otp: str
+
+
+class SendVerificationRequest(BaseModel):
+    email: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
+
+class MessageResponse(BaseModel):
+    message: str
 
 
 class LoginRequest(BaseModel):
@@ -47,13 +73,67 @@ class GoogleLoginRequest(BaseModel):
     id_token: str
 
 
+@router.post("/send-verification", response_model=MessageResponse)
+async def send_verification(request: SendVerificationRequest, db: Session = Depends(get_db)):
+    """
+    Send a 6-digit OTP to the given email for registration verification.
+    Must be called before /register.
+    """
+    existing_email = db.query(User).filter(User.email == request.email).first()
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email already exists",
+        )
+
+    otp = generate_otp()
+
+    # Invalidate any previous unused tokens for this email
+    db.query(VerificationToken).filter(
+        VerificationToken.email == request.email,
+        VerificationToken.token_type == "email_verify",
+    ).delete()
+
+    token_record = VerificationToken(
+        email=request.email,
+        token=otp,
+        token_type="email_verify",
+        expires_at=datetime.utcnow() + timedelta(minutes=15),
+    )
+    db.add(token_record)
+    db.commit()
+
+    send_verification_email(request.email, otp)
+
+    return MessageResponse(message="Verification code sent to your email")
+
+
 @router.post("/register", response_model=AuthResponse)
 async def register(request: RegisterRequest, db: Session = Depends(get_db)):
     """
-    Register a new user.
-    Returns JWT token immediately (auto-login).
+    Register a new user after email OTP verification.
+    Requires a valid OTP obtained from /send-verification.
     """
-    # Check if user already exists
+    # Verify OTP
+    token_record = db.query(VerificationToken).filter(
+        VerificationToken.email == request.email,
+        VerificationToken.token_type == "email_verify",
+        VerificationToken.token == request.otp,
+        VerificationToken.is_used == False,
+        VerificationToken.expires_at > datetime.utcnow(),
+    ).first()
+
+    if not token_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification code",
+        )
+
+    # Mark token as used immediately to prevent replay
+    token_record.is_used = True
+    db.flush()
+
+    # Check if username already exists
     existing_user = db.query(User).filter(User.username == request.username).first()
     if existing_user:
         raise HTTPException(
@@ -65,10 +145,10 @@ async def register(request: RegisterRequest, db: Session = Depends(get_db)):
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists",
+            detail="An account with this email already exists",
         )
 
-    # Create new user
+    # Create new verified user
     user = User(
         username=request.username,
         email=request.email,
@@ -120,6 +200,78 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
     )
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Send a password-reset OTP to the given email.
+    Always returns 200 to avoid revealing whether the email is registered.
+    """
+    user = db.query(User).filter(User.email == request.email).first()
+
+    if user:
+        otp = generate_otp()
+
+        # Invalidate previous reset tokens for this email
+        db.query(VerificationToken).filter(
+            VerificationToken.email == request.email,
+            VerificationToken.token_type == "password_reset",
+        ).delete()
+
+        token_record = VerificationToken(
+            email=request.email,
+            token=otp,
+            token_type="password_reset",
+            expires_at=datetime.utcnow() + timedelta(minutes=15),
+        )
+        db.add(token_record)
+        db.commit()
+
+        send_password_reset_email(request.email, otp)
+
+    return MessageResponse(
+        message="If an account with that email exists, a reset code has been sent"
+    )
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """
+    Reset a user's password using a valid OTP from /forgot-password.
+    """
+    if len(request.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters",
+        )
+
+    token_record = db.query(VerificationToken).filter(
+        VerificationToken.email == request.email,
+        VerificationToken.token_type == "password_reset",
+        VerificationToken.token == request.otp,
+        VerificationToken.is_used == False,
+        VerificationToken.expires_at > datetime.utcnow(),
+    ).first()
+
+    if not token_record:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset code",
+        )
+
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    user.hashed_password = hash_password(request.new_password)
+    token_record.is_used = True
+    db.commit()
+
+    return MessageResponse(message="Password reset successfully")
 
 
 @router.get("/me", response_model=UserResponse)

@@ -10,6 +10,7 @@ import { DashboardPage } from './components/dashboard/DashboardPage';
 import { CourtPage } from './components/court/CourtPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { RegisterPage } from './components/auth/RegisterPage';
+import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import { fetchDashboardSummary } from './services/api';
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/" element={<SmartRootRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         {/* Protected Routes */}
         <Route
