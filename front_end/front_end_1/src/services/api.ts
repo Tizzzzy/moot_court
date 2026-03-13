@@ -342,10 +342,17 @@ export async function fetchDashboardSummary(userId: string) {
 export interface EvidenceFolderStatus {
   has_files: boolean;
   file_count: number;
-  files: string[];
+  files: EvidenceStatusFile[];
   is_ready: boolean;
   /** Per-file feedback keyed by file stem (no extension). "_all_" is used for legacy single-file feedback. */
   file_feedbacks?: Record<string, string>;
+}
+
+export interface EvidenceStatusFile {
+  filename: string;
+  is_ready: boolean;
+  feedback?: string | null;
+  size_bytes?: number | null;
 }
 
 export interface EvidenceStatusResponse {

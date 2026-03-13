@@ -41,13 +41,10 @@ export default function EvidenceUpload({
   initialStatus = "none",
 }: EvidenceUploadProps) {
   const startsInReplacementMode = initialStatus === "ready";
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
-    startsInReplacementMode ? [] : initialFiles
-  );
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(initialFiles);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasAnalyzed, setHasAnalyzed] = useState(
-    startsInReplacementMode ? false : initialAnalyzed
-  );
+  const [hasAnalyzed, setHasAnalyzed] = useState(initialAnalyzed);
+  const [hasStartedReplacementUpload, setHasStartedReplacementUpload] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rawFilesRef = useRef<Map<string, File>>(new Map());
@@ -59,8 +56,9 @@ export default function EvidenceUpload({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+    const selectedFiles = Array.from(files);
 
-    const newFiles: UploadedFile[] = Array.from(files).map((file) => {
+    const newFiles: UploadedFile[] = selectedFiles.map((file) => {
       const id = Math.random().toString(36).substr(2, 9);
       rawFilesRef.current.set(id, file);
       return {
@@ -71,7 +69,22 @@ export default function EvidenceUpload({
       };
     });
 
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
+    setUploadedFiles((prev) => {
+      if (startsInReplacementMode && !hasStartedReplacementUpload) {
+        return newFiles;
+      }
+      return [...prev, ...newFiles];
+    });
+    if (startsInReplacementMode && !hasStartedReplacementUpload) {
+      rawFilesRef.current.clear();
+      newFiles.forEach((meta, idx) => {
+        const selected = selectedFiles[idx];
+        if (selected) {
+          rawFilesRef.current.set(meta.id, selected);
+        }
+      });
+      setHasStartedReplacementUpload(true);
+    }
     setHasAnalyzed(false);
     setAnalysisError(null);
   };

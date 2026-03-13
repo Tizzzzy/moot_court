@@ -145,18 +145,20 @@ export function DashboardPage() {
               initialStates[index] = {
                 hasFiles: folderStatus.has_files,
                 analyzed: folderStatus.has_files,
-                files: folderStatus.files.map((name) => {
+                files: folderStatus.files.map((fileInfo) => {
+                  const name = fileInfo.filename;
                   // Match per-file feedback by stem (filename without extension)
                   const stem = name.replace(/\.[^/.]+$/, "");
                   const feedbackText =
+                    fileInfo.feedback ??
                     folderStatus.file_feedbacks?.[stem] ??
                     folderStatus.file_feedbacks?.["_all_"];
                   return {
                     id: name,
                     name,
-                    size: 0,
-                    status: (folderStatus.is_ready ? "valid" : "pending") as
-                      "valid" | "pending",
+                    size: fileInfo.size_bytes ?? 0,
+                    status: (fileInfo.is_ready ? "valid" : "invalid") as
+                      "valid" | "invalid",
                     ...(feedbackText
                       ? { feedback: { message: feedbackText, suggestions: [] } }
                       : {}),

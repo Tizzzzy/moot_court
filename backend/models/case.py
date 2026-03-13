@@ -125,7 +125,7 @@ class EvidenceFile(Base):
     id = Column(Integer, primary_key=True)
     evidence_item_id = Column(Integer, ForeignKey("evidence_items.id"), nullable=False)
     filename = Column(String(255), nullable=False)
-    file_path = Column(Text, nullable=False)  # absolute path on disk (file kept locally)
+    file_path = Column(Text, nullable=True)  # path for ready files; null when evidence is not ready
     feedback = Column(Text)                   # replaces feedback_*.md
     is_ready = Column(Boolean)
     mime_type = Column(String(100))

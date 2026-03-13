@@ -390,15 +390,17 @@ def analyze_evidence(
         .all()
     )
     for existing in existing_files:
-        existing_path = Path(existing.file_path)
-        if existing_path.exists() and existing_path.is_file():
-            existing_path.unlink(missing_ok=True)
+        if existing.file_path:
+            existing_path = Path(existing.file_path)
+            if existing_path.exists() and existing_path.is_file():
+                existing_path.unlink(missing_ok=True)
         db.delete(existing)
     db.flush()
 
     for staged_file_path in staged_file_paths:
         file_path = str(staged_file_path)
         filename = staged_file_path.name
+        staged_size = staged_file_path.stat().st_size if staged_file_path.exists() else 0
         ready_status, feedback = analyze_evidence_file(
             case_data, description, [file_path], settings.GEMINI_API_KEY
         )
@@ -420,12 +422,23 @@ def analyze_evidence(
             ))
         else:
             staged_file_path.unlink(missing_ok=True)
+            db.add(EvidenceFileModel(
+                evidence_item_id=evidence_item.id,
+                filename=filename,
+                file_path=None,
+                feedback=feedback,
+                is_ready=False,
+                mime_type="application/octet-stream",
+                size_bytes=staged_size,
+            ))
 
         results.append({
             "filename": filename,
             "ready_status": ready_status,
             "specific_feedback": feedback,
         })
+
+    db.flush()
 
     # Update parent EvidenceItem status from persisted ready files only
     persisted_ready_count = (
@@ -476,12 +489,14 @@ def get_evidence_status(
         ready_file_count = 0
 
         for ef in item.files:
-            # Evidence status is driven by files persisted as ready.
-            if not ef.is_ready:
-                continue
-            ready_file_count += 1
-            files_info.append(ef.filename)
+            files_info.append({
+                "filename": ef.filename,
+                "is_ready": bool(ef.is_ready),
+                "feedback": ef.feedback,
+                "size_bytes": ef.size_bytes,
+            })
             if ef.is_ready:
+                ready_file_count += 1
                 is_ready = True
             if ef.feedback:
                 stem = Path(ef.filename).stem
