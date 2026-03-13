@@ -333,6 +333,55 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
   );
 
   /**
+   * Submit prepared (already ready) evidence folders without local file picker.
+   */
+  const submitPreparedEvidence = useCallback(
+    async (userId: string, caseId: number, folderNames: string[]) => {
+      if (!state.sessionId) {
+        setState((s) => ({
+          ...s,
+          error: "No active session",
+        }));
+        return;
+      }
+
+      if (folderNames.length === 0) {
+        return;
+      }
+
+      setState((s) => ({ ...s, isLoading: true, error: null }));
+
+      try {
+        const response = await courtSessionService.submitPreparedEvidence(
+          state.sessionId,
+          {
+            user_id: userId,
+            case_id: caseId,
+            folder_names: folderNames,
+          }
+        );
+
+        setState((s) => ({
+          ...s,
+          isLoading: false,
+        }));
+
+        return response.uploaded_files;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to submit prepared evidence";
+        setState((s) => ({
+          ...s,
+          error: errorMessage,
+          isLoading: false,
+        }));
+        throw error;
+      }
+    },
+    [state.sessionId]
+  );
+
+  /**
    * Complete the session.
    */
   const endSession = useCallback(async () => {
@@ -530,6 +579,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     loadSession,
     sendMessage,
     uploadEvidence,
+    submitPreparedEvidence,
     endSession,
     continueAfterObjection,
   };

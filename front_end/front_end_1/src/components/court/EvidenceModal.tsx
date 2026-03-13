@@ -29,12 +29,14 @@ export function EvidenceModal({ isOpen = true, onSubmit, onCancel, availableEvid
 
   useEffect(() => {
     if (availableEvidence.length > 0) {
-      setEvidence(availableEvidence.map((e, idx) => ({
-        id: String(idx + 1),
+      setEvidence(availableEvidence.map((e) => ({
+        id: e.folderName,
         name: e.title,
         isValid: e.isReady,
         selected: false
       })));
+    } else {
+      setEvidence([]);
     }
   }, [availableEvidence]);
 

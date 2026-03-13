@@ -188,6 +188,21 @@ def get_case_recommend_evidence_dir(user_id: str, case_id: int) -> Path:
     return rec_path
 
 
+def get_case_staging_evidence_dir(user_id: str, case_id: int) -> Path:
+    """
+    Get the staging directory for recommendation evidence uploads.
+
+    Files are uploaded here first and only promoted to recommend_evidence after
+    they pass analysis.
+
+    Returns:
+        Path to {base_data_dir}/{user_id}/evidence/case_{case_id}/staging_recommend_evidence/
+    """
+    staging_path = get_case_evidence_dir(user_id, case_id) / "staging_recommend_evidence"
+    staging_path.mkdir(parents=True, exist_ok=True)
+    return staging_path
+
+
 def validate_path_config() -> dict:
     """
     Validate path configuration on startup.

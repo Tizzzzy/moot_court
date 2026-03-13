@@ -30,6 +30,12 @@ export interface EvidenceUploadRequest {
   files: File[];
 }
 
+export interface PreparedEvidenceUploadRequest {
+  user_id: string;
+  case_id: number;
+  folder_names: string[];
+}
+
 // ===== Response Models =====
 
 export interface EvidenceRequest {

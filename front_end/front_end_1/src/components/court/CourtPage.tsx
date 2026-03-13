@@ -88,6 +88,7 @@ export function CourtPage() {
   const [evidenceFiles, setEvidenceFiles] = useState<EvidenceFile[]>([]);
   const [pendingEvidence, setPendingEvidence] = useState<EvidenceFile[]>([]);
   const [pendingEvidenceFiles, setPendingEvidenceFiles] = useState<File[]>([]); // Actual file objects
+  const [pendingPreparedFolders, setPendingPreparedFolders] = useState<string[]>([]);
   const [showEvidenceIndicator, setShowEvidenceIndicator] = useState(false);
   const [submittedEvidenceNames, setSubmittedEvidenceNames] = useState<string[]>([]);
   const [showSidePanel, setShowSidePanel] = useState(false);
@@ -175,6 +176,20 @@ export function CourtPage() {
   const handleSendMessage = async (message: string) => {
     setEditingMessage('');
     try {
+      if (pendingPreparedFolders.length > 0) {
+        const preparedUploaded = await courtSession.submitPreparedEvidence(USER_ID, caseId, pendingPreparedFolders);
+        if (preparedUploaded && preparedUploaded.length > 0) {
+          const preparedEvidenceFiles: EvidenceFile[] = preparedUploaded.map((file) => ({
+            name: file.filename,
+            type: file.mime_type,
+            size: file.size_bytes,
+          }));
+          setEvidenceFiles((prev) => [...prev, ...preparedEvidenceFiles]);
+          setEvidencePresented(true);
+        }
+        setPendingPreparedFolders([]);
+      }
+
       // UPLOAD EVIDENCE FIRST (if any) - ensures it's uploaded during Plaintiff's turn
       // Backend returns turn to Plaintiff after evidence acknowledgement
       if (pendingEvidenceFiles.length > 0) {
@@ -202,7 +217,9 @@ export function CourtPage() {
   const handlePresentEvidence = async (selectedEvidence: string[], uploadedFiles: File[]) => {
     setShowEvidenceModal(false);
 
-    if (uploadedFiles.length === 0) return;
+    if (selectedEvidence.length === 0 && uploadedFiles.length === 0) {
+      return;
+    }
 
     const uploadedEvidenceFiles: EvidenceFile[] = uploadedFiles.map(file => ({
       name: file.name,
@@ -211,6 +228,7 @@ export function CourtPage() {
     }));
 
     // ALWAYS stage evidence for upload with next message
+    setPendingPreparedFolders(selectedEvidence);
     setPendingEvidence(uploadedEvidenceFiles);
     setPendingEvidenceFiles(uploadedFiles);
     setShowEvidenceIndicator(true);

@@ -3,10 +3,13 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Query
 from sqlalchemy.orm import Session
 import json
+import shutil
+from pydantic import BaseModel
+from datetime import datetime
 
 from backend.database import get_db
 from backend.models.user import User
-from backend.models.case import Case, CourtSessionModel, CourtSubmittedEvidence
+from backend.models.case import Case, CourtSessionModel, CourtSubmittedEvidence, EvidenceItem, EvidenceFile
 from backend.schemas.court_schemas import (
     CreateSessionRequest,
     CreateSessionResponse,
@@ -42,6 +45,12 @@ ENABLE_OBJECTIONS = True
 # Initialize services
 _session_service: Optional[CourtSessionService] = None
 _evidence_services: dict = {}  # session_id -> EvidenceService
+
+
+class SubmitPreparedEvidenceRequest(BaseModel):
+    user_id: str
+    case_id: int
+    folder_names: List[str]
 
 
 def get_session_service() -> CourtSessionService:
@@ -647,6 +656,117 @@ async def upload_evidence(
         raise
     except Exception as e:
         logger.error(f"Error uploading evidence: {e}")
+        raise
+
+
+@router.post("/sessions/{session_id}/evidence/prepared", response_model=UploadEvidenceResponse)
+async def upload_prepared_evidence(
+    session_id: str,
+    request: SubmitPreparedEvidenceRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Submit ready evidence that was prepared in the dashboard without re-uploading
+    from local user files.
+    """
+    try:
+        service = get_session_service()
+        court_session = service.get_session(session_id, db)
+
+        if not court_session:
+            raise ValueError(f"Session {session_id} not found")
+
+        if court_session.current_speaker != "Plaintiff":
+            raise ValueError("Evidence can only be uploaded during your turn to speak.")
+
+        folder_names = [name for name in request.folder_names if name]
+        if not folder_names:
+            raise ValueError("No prepared evidence folders selected")
+
+        evidence_service = EvidenceService(court_session.evidence_submit_dir)
+        evidence_service.base_dir.mkdir(parents=True, exist_ok=True)
+
+        uploaded = []
+        for folder_name in folder_names:
+            evidence_item = (
+                db.query(EvidenceItem)
+                .filter_by(case_id=request.case_id, evidence_name=folder_name)
+                .first()
+            )
+            if not evidence_item:
+                continue
+
+            ready_files = (
+                db.query(EvidenceFile)
+                .filter_by(evidence_item_id=evidence_item.id, is_ready=True)
+                .all()
+            )
+
+            for idx, ready_file in enumerate(ready_files, start=1):
+                source_path = Path(ready_file.file_path)
+                if not source_path.exists():
+                    continue
+
+                ext = source_path.suffix.lower() or ".bin"
+                sanitized_name = EvidenceService._sanitize_filename(source_path.name)
+                base_name = os.path.splitext(sanitized_name)[0]
+                target_name = f"turn_{court_session.turn_number}_prepared_{idx}_{base_name}{ext}"
+                target_path = evidence_service.base_dir / target_name
+
+                suffix = 1
+                while target_path.exists():
+                    target_name = f"turn_{court_session.turn_number}_prepared_{idx}_{base_name}_{suffix}{ext}"
+                    target_path = evidence_service.base_dir / target_name
+                    suffix += 1
+
+                shutil.copy2(str(source_path), str(target_path))
+                stat = target_path.stat()
+                uploaded.append(
+                    {
+                        "filename": target_name,
+                        "path": str(target_path),
+                        "size_bytes": stat.st_size,
+                        "mime_type": ready_file.mime_type or "application/octet-stream",
+                        "upload_time": datetime.utcnow().isoformat(),
+                    }
+                )
+
+        if not uploaded:
+            raise ValueError("No ready evidence files found in selected folders")
+
+        court_session.evidence_buffer.extend([f["path"] for f in uploaded])
+
+        for f in uploaded:
+            db.add(CourtSubmittedEvidence(
+                session_id=session_id,
+                filename=f["filename"],
+                file_path=f["path"],
+                turn_number=court_session.turn_number,
+                mime_type=f.get("mime_type"),
+                size_bytes=f.get("size_bytes"),
+            ))
+        db.commit()
+
+        file_names = [f["filename"] for f in uploaded]
+        evidence_msg = f"[Plaintiff submitted prepared evidence: {', '.join(file_names)}]"
+        court_session.history.append({
+            "role": "System",
+            "content": evidence_msg,
+            "turn": court_session.turn_number,
+        })
+
+        court_session.current_speaker = "Plaintiff"
+        await ws_manager.send_next_speaker(session_id, "Plaintiff")
+
+        service.save_session(session_id, db)
+        return UploadEvidenceResponse(
+            uploaded_files=[EvidenceFileMetadata(**f) for f in uploaded]
+        )
+    except ValueError as e:
+        logger.warning(f"Prepared evidence upload validation failed: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading prepared evidence: {e}")
         raise
 
 

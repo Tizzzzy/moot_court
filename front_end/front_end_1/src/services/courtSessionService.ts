@@ -13,6 +13,7 @@ import type {
   SessionTranscript,
   UploadEvidenceResponse,
   EvidenceUploadRequest,
+  PreparedEvidenceUploadRequest,
   ContinueAfterObjectionRequest,
   ErrorResponse,
 } from "../types/court";
@@ -92,6 +93,19 @@ class CourtSessionService {
     return apiClient.uploadFiles<UploadEvidenceResponse>(
       `${this.basePath}/sessions/${sessionId}/evidence`,
       files
+    );
+  }
+
+  /**
+   * Submit already-ready evidence from dashboard-prepared folders.
+   */
+  async submitPreparedEvidence(
+    sessionId: string,
+    request: PreparedEvidenceUploadRequest
+  ): Promise<UploadEvidenceResponse> {
+    return apiClient.post<UploadEvidenceResponse>(
+      `${this.basePath}/sessions/${sessionId}/evidence/prepared`,
+      request
     );
   }
 

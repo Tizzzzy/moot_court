@@ -1,4 +1,5 @@
-﻿from pathlib import Path
+﻿import shutil
+from pathlib import Path
 from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, UploadFile, Depends
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ from fastapi import Query
 from backend.utils.path_utils import (
     get_user_evidence_dir,
     get_case_recommend_evidence_dir,
+    get_case_staging_evidence_dir,
 )
 from backend.utils.auth_utils import get_optional_user
 
@@ -289,13 +291,14 @@ async def upload_evidence_file(
     db: Session = Depends(get_db),
 ):
     """
-    Upload an evidence file.  The binary is saved to the local filesystem so
-    Gemini can read it; metadata is stored in the EvidenceFile DB table.
+    Upload an evidence file to staging.
+
+    The file is only promoted to recommend_evidence after analysis marks it as ready.
     """
     if case_id is not None:
-        evidence_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
+        evidence_folder = get_case_staging_evidence_dir(user_id, case_id) / folder_name
     else:
-        evidence_folder = get_user_evidence_dir(user_id) / "recommend_evidence" / folder_name
+        evidence_folder = get_user_evidence_dir(user_id) / "staging_recommend_evidence" / folder_name
 
     evidence_folder.mkdir(parents=True, exist_ok=True)
 
@@ -304,27 +307,11 @@ async def upload_evidence_file(
     with open(file_path, "wb") as f:
         f.write(content)
 
-    # Record the file in the DB if we can link it to an EvidenceItem
-    if case_id is not None:
-        evidence_item = (
-            db.query(EvidenceItemModel)
-            .filter_by(case_id=case_id, evidence_name=folder_name)
-            .first()
-        )
-        if evidence_item:
-            db.add(EvidenceFileModel(
-                evidence_item_id=evidence_item.id,
-                filename=file.filename,
-                file_path=str(file_path),
-                mime_type=file.content_type,
-                size_bytes=len(content),
-            ))
-            db.commit()
-
     return {
         "filename": file.filename,
         "size": len(content),
         "path": str(file_path),
+        "staged": True,
     }
 
 
@@ -370,61 +357,65 @@ def analyze_evidence(
 
     description = evidence_item.description
 
-    # ---------- Collect evidence files ----------
-    # Prefer DB records; fall back to scanning the filesystem folder
-    db_files = db.query(EvidenceFileModel).filter_by(evidence_item_id=evidence_item.id).all()
-
-    if db_files:
-        evidence_file_paths = [ef.file_path for ef in db_files]
+    # ---------- Collect staged evidence files ----------
+    if case_id is not None:
+        staging_folder = get_case_staging_evidence_dir(user_id, case_id) / folder_name
+        ready_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
     else:
-        # Scan filesystem (handles files uploaded before DB tracking was added)
-        if case_id is not None:
-            evidence_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
-        else:
-            evidence_folder = get_user_evidence_dir(user_id) / "recommend_evidence" / folder_name
+        staging_folder = get_user_evidence_dir(user_id) / "staging_recommend_evidence" / folder_name
+        ready_folder = get_user_evidence_dir(user_id) / "recommend_evidence" / folder_name
 
-        if not evidence_folder.exists():
-            raise HTTPException(400, f"Evidence folder '{folder_name}' does not exist on disk")
+    if not staging_folder.exists():
+        raise HTTPException(400, "No staged evidence found for this folder")
 
-        evidence_file_paths = [
-            str(f) for f in evidence_folder.iterdir()
-            if f.is_file()
-            and f.name != "description.txt"
-            and not f.name.startswith("feedback_")
-        ]
+    staged_file_paths = [
+        f for f in staging_folder.iterdir()
+        if f.is_file() and f.name != "description.txt" and not f.name.startswith("feedback_")
+    ]
 
-    if not evidence_file_paths:
-        raise HTTPException(400, "No evidence files found for this folder")
+    if not staged_file_paths:
+        raise HTTPException(400, "No staged evidence files found for this folder")
 
     # ---------- Analyze and save feedback to DB ----------
     results = []
-    any_ready = False
+    ready_folder.mkdir(parents=True, exist_ok=True)
 
-    for file_path in evidence_file_paths:
-        filename = Path(file_path).name
+    for staged_file_path in staged_file_paths:
+        file_path = str(staged_file_path)
+        filename = staged_file_path.name
         ready_status, feedback = analyze_evidence_file(
             case_data, description, [file_path], settings.GEMINI_API_KEY
         )
 
         if ready_status:
-            any_ready = True
+            ready_path = ready_folder / filename
+            if ready_path.exists():
+                ready_path.unlink()
+            shutil.move(str(staged_file_path), str(ready_path))
 
-        # Update or create EvidenceFile DB record
-        ev_file = next(
-            (ef for ef in db_files if ef.file_path == file_path),
-            None,
-        )
-        if ev_file:
-            ev_file.feedback = feedback
-            ev_file.is_ready = ready_status
+            ev_file = (
+                db.query(EvidenceFileModel)
+                .filter_by(evidence_item_id=evidence_item.id, filename=filename)
+                .first()
+            )
+            if ev_file:
+                ev_file.file_path = str(ready_path)
+                ev_file.feedback = feedback
+                ev_file.is_ready = True
+                ev_file.mime_type = ev_file.mime_type or "application/octet-stream"
+                ev_file.size_bytes = ready_path.stat().st_size
+            else:
+                db.add(EvidenceFileModel(
+                    evidence_item_id=evidence_item.id,
+                    filename=filename,
+                    file_path=str(ready_path),
+                    feedback=feedback,
+                    is_ready=True,
+                    mime_type="application/octet-stream",
+                    size_bytes=ready_path.stat().st_size,
+                ))
         else:
-            db.add(EvidenceFileModel(
-                evidence_item_id=evidence_item.id,
-                filename=filename,
-                file_path=file_path,
-                feedback=feedback,
-                is_ready=ready_status,
-            ))
+            staged_file_path.unlink(missing_ok=True)
 
         results.append({
             "filename": filename,
@@ -432,8 +423,15 @@ def analyze_evidence(
             "specific_feedback": feedback,
         })
 
-    # Update parent EvidenceItem status
-    evidence_item.status = EvidenceStatus.READY if any_ready else EvidenceStatus.NOT_READY
+    # Update parent EvidenceItem status from persisted ready files only
+    persisted_ready_count = (
+        db.query(EvidenceFileModel)
+        .filter_by(evidence_item_id=evidence_item.id, is_ready=True)
+        .count()
+    )
+    evidence_item.status = (
+        EvidenceStatus.READY if persisted_ready_count > 0 else EvidenceStatus.NOT_READY
+    )
     db.commit()
 
     return {"folder": folder_name, "results": results}
@@ -473,6 +471,9 @@ def get_evidence_status(
         is_ready = False
 
         for ef in item.files:
+            # Evidence status is driven by files persisted as ready.
+            if not ef.is_ready:
+                continue
             files_info.append(ef.filename)
             if ef.is_ready:
                 is_ready = True
