@@ -7,6 +7,7 @@ import { EvidenceIndicator } from './EvidenceIndicator';
 import { EvidenceSidePanel } from './EvidenceSidePanel';
 import { FilePreviewModal } from './FilePreviewModal';
 import { useCourtSession } from '@/hooks/useCourtSession';
+import { courtSessionService } from '@/services/courtSessionService';
 import type { ChatMessage, ObjectionDecision } from '@/types/court';
 import { fetchEvidenceRecommendations, fetchDashboardSummary } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,6 +54,20 @@ export interface EvidenceFile {
   name: string;
   type: string;
   size: number;
+  serverFilename?: string;
+  previewUrl?: string;
+}
+
+function inferMimeType(filename: string, fallback?: string): string {
+  if (fallback && fallback !== 'application/octet-stream') {
+    return fallback;
+  }
+
+  const ext = filename.toLowerCase().split('.').pop();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  return fallback || 'application/octet-stream';
 }
 
 function mapChatMessageToMessage(chatMsg: ChatMessage): Message {
@@ -167,6 +182,14 @@ export function CourtPage() {
     }
   }, [USER_ID, sessionIdParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    return () => {
+      if (previewFile?.previewUrl) {
+        URL.revokeObjectURL(previewFile.previewUrl);
+      }
+    };
+  }, [previewFile]);
+
   const handleStartHearing = async () => {
     setCurrentScreen('hearing');
     setCurrentStep(1);
@@ -181,8 +204,9 @@ export function CourtPage() {
         if (preparedUploaded && preparedUploaded.length > 0) {
           const preparedEvidenceFiles: EvidenceFile[] = preparedUploaded.map((file) => ({
             name: file.filename,
-            type: file.mime_type,
+            type: inferMimeType(file.filename, file.mime_type),
             size: file.size_bytes,
+            serverFilename: file.filename,
           }));
           setEvidenceFiles((prev) => [...prev, ...preparedEvidenceFiles]);
           setEvidencePresented(true);
@@ -193,8 +217,18 @@ export function CourtPage() {
       // UPLOAD EVIDENCE FIRST (if any) - ensures it's uploaded during Plaintiff's turn
       // Backend returns turn to Plaintiff after evidence acknowledgement
       if (pendingEvidenceFiles.length > 0) {
-        await courtSession.uploadEvidence(pendingEvidenceFiles);
-        setEvidenceFiles(prev => [...prev, ...pendingEvidence]);
+        const uploaded = await courtSession.uploadEvidence(pendingEvidenceFiles);
+        if (uploaded && uploaded.length > 0) {
+          const uploadedEvidenceFiles: EvidenceFile[] = uploaded.map((file) => ({
+            name: file.filename,
+            type: inferMimeType(file.filename, file.mime_type),
+            size: file.size_bytes,
+            serverFilename: file.filename,
+          }));
+          setEvidenceFiles(prev => [...prev, ...uploadedEvidenceFiles]);
+        } else {
+          setEvidenceFiles(prev => [...prev, ...pendingEvidence]);
+        }
         setPendingEvidence([]);
         setPendingEvidenceFiles([]);
         setEvidencePresented(true);
@@ -349,7 +383,7 @@ export function CourtPage() {
         <ActiveHearing
           currentStep={currentStep}
           messages={messages}
-          evidenceCount={pendingEvidence.length}
+          evidenceCount={pendingEvidence.length + pendingPreparedFolders.length}
           onNextStep={handleNextStep}
           onSendMessage={handleSendMessage}
           onViewEvidence={() => setShowEvidenceModal(true)}
@@ -392,15 +426,44 @@ export function CourtPage() {
         isOpen={showSidePanel}
         onClose={() => setShowSidePanel(false)}
         evidenceFiles={evidenceFiles}
-        onPreview={(file) => {
-          setPreviewFile(file);
-          setShowSidePanel(false);
+        onPreview={async (file) => {
+          try {
+            if (!courtSession.sessionId || !file.serverFilename) {
+              setPreviewFile(file);
+              setShowSidePanel(false);
+              return;
+            }
+
+            const blob = await courtSessionService.getSubmittedEvidenceFile(
+              courtSession.sessionId,
+              file.serverFilename
+            );
+            const previewUrl = URL.createObjectURL(blob);
+
+            if (previewFile?.previewUrl) {
+              URL.revokeObjectURL(previewFile.previewUrl);
+            }
+
+            setPreviewFile({
+              ...file,
+              type: blob.type || file.type,
+              previewUrl,
+            });
+            setShowSidePanel(false);
+          } catch (error) {
+            console.error('Failed to preview evidence file:', error);
+            setPreviewFile(file);
+            setShowSidePanel(false);
+          }
         }}
       />
 
       <FilePreviewModal
         isOpen={previewFile !== null}
         onClose={() => {
+          if (previewFile?.previewUrl) {
+            URL.revokeObjectURL(previewFile.previewUrl);
+          }
           setPreviewFile(null);
           setShowSidePanel(true);
         }}

@@ -4,6 +4,8 @@ interface EvidenceFile {
   name: string;
   type: string;
   size: number;
+  serverFilename?: string;
+  previewUrl?: string;
 }
 
 interface EvidenceSidePanelProps {

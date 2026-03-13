@@ -1,4 +1,5 @@
 ﻿import shutil
+import logging
 from pathlib import Path
 from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, UploadFile, Depends
@@ -26,6 +27,7 @@ from backend.utils.path_utils import (
 from backend.utils.auth_utils import get_optional_user
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -380,6 +382,20 @@ def analyze_evidence(
     results = []
     ready_folder.mkdir(parents=True, exist_ok=True)
 
+    # Replacement semantics: once user submits new evidence for a category,
+    # old stored files are removed and replaced by this analysis batch.
+    existing_files = (
+        db.query(EvidenceFileModel)
+        .filter_by(evidence_item_id=evidence_item.id)
+        .all()
+    )
+    for existing in existing_files:
+        existing_path = Path(existing.file_path)
+        if existing_path.exists() and existing_path.is_file():
+            existing_path.unlink(missing_ok=True)
+        db.delete(existing)
+    db.flush()
+
     for staged_file_path in staged_file_paths:
         file_path = str(staged_file_path)
         filename = staged_file_path.name
@@ -393,27 +409,15 @@ def analyze_evidence(
                 ready_path.unlink()
             shutil.move(str(staged_file_path), str(ready_path))
 
-            ev_file = (
-                db.query(EvidenceFileModel)
-                .filter_by(evidence_item_id=evidence_item.id, filename=filename)
-                .first()
-            )
-            if ev_file:
-                ev_file.file_path = str(ready_path)
-                ev_file.feedback = feedback
-                ev_file.is_ready = True
-                ev_file.mime_type = ev_file.mime_type or "application/octet-stream"
-                ev_file.size_bytes = ready_path.stat().st_size
-            else:
-                db.add(EvidenceFileModel(
-                    evidence_item_id=evidence_item.id,
-                    filename=filename,
-                    file_path=str(ready_path),
-                    feedback=feedback,
-                    is_ready=True,
-                    mime_type="application/octet-stream",
-                    size_bytes=ready_path.stat().st_size,
-                ))
+            db.add(EvidenceFileModel(
+                evidence_item_id=evidence_item.id,
+                filename=filename,
+                file_path=str(ready_path),
+                feedback=feedback,
+                is_ready=True,
+                mime_type="application/octet-stream",
+                size_bytes=ready_path.stat().st_size,
+            ))
         else:
             staged_file_path.unlink(missing_ok=True)
 
@@ -469,11 +473,13 @@ def get_evidence_status(
         files_info = []
         file_feedbacks: dict = {}
         is_ready = False
+        ready_file_count = 0
 
         for ef in item.files:
             # Evidence status is driven by files persisted as ready.
             if not ef.is_ready:
                 continue
+            ready_file_count += 1
             files_info.append(ef.filename)
             if ef.is_ready:
                 is_ready = True
@@ -489,6 +495,21 @@ def get_evidence_status(
             "file_feedbacks": file_feedbacks,
             "description": item.description,
         }
+
+        expected_status = (
+            EvidenceStatus.READY if ready_file_count > 0 else EvidenceStatus.NOT_READY
+        )
+        if item.status != expected_status:
+            logger.warning(
+                "Correcting evidence status mismatch: case_id=%s evidence_name=%s old=%s new=%s",
+                item.case_id,
+                item.evidence_name,
+                item.status,
+                expected_status,
+            )
+            item.status = expected_status
+
+    db.commit()
 
     return {"status": status}
 

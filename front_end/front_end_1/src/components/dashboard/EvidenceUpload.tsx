@@ -40,9 +40,14 @@ export default function EvidenceUpload({
   initialAnalyzed = false,
   initialStatus = "none",
 }: EvidenceUploadProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(initialFiles);
+  const startsInReplacementMode = initialStatus === "ready";
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(
+    startsInReplacementMode ? [] : initialFiles
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasAnalyzed, setHasAnalyzed] = useState(initialAnalyzed);
+  const [hasAnalyzed, setHasAnalyzed] = useState(
+    startsInReplacementMode ? false : initialAnalyzed
+  );
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const rawFilesRef = useRef<Map<string, File>>(new Map());

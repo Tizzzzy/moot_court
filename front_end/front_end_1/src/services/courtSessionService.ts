@@ -21,6 +21,11 @@ import type {
 class CourtSessionService {
   private basePath = "/court";
 
+  private getAuthHeaders(): Record<string, string> {
+    const token = localStorage.getItem("auth_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   /**
    * Create a new court session.
    */
@@ -125,6 +130,27 @@ class CourtSessionService {
     return apiClient.delete<{ status: string }>(
       `${this.basePath}/sessions/${sessionId}`
     );
+  }
+
+  /**
+   * Download a submitted evidence file for preview.
+   */
+  async getSubmittedEvidenceFile(sessionId: string, filename: string): Promise<Blob> {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api"}${this.basePath}/sessions/${sessionId}/evidence/download?filename=${encodeURIComponent(filename)}`,
+      {
+        method: "GET",
+        headers: {
+          ...this.getAuthHeaders(),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch evidence file: ${response.statusText}`);
+    }
+
+    return response.blob();
   }
 }
 

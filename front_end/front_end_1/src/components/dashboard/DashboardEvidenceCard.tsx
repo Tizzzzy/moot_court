@@ -98,17 +98,16 @@ export function DashboardEvidenceCard({
                 </div>
                 <button
                   onClick={() => onUpload(index)}
-                  disabled={isReady}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap ${
                     isReady
-                      ? 'bg-green-50 border border-green-200 text-green-700 cursor-not-allowed'
+                      ? 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100'
                       : 'border border-[rgba(0,0,0,0.1)] text-gray-700 hover:bg-gray-50'
                   }`}
                 >
                   {isReady ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Uploaded
+                      <Upload className="w-4 h-4" />
+                      Replace
                     </>
                   ) : (
                     <>

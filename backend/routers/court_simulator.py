@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Query
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, File, UploadFile, Form, Query, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import json
 import shutil
@@ -794,6 +795,35 @@ async def get_transcript(
     except Exception as e:
         logger.error(f"Error retrieving transcript: {e}")
         raise
+
+
+@router.get("/sessions/{session_id}/evidence/download")
+async def download_submitted_evidence(
+    session_id: str,
+    filename: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Download a submitted evidence file for preview in the simulation UI.
+    """
+    submitted = (
+        db.query(CourtSubmittedEvidence)
+        .filter_by(session_id=session_id, filename=filename)
+        .order_by(CourtSubmittedEvidence.id.desc())
+        .first()
+    )
+    if not submitted:
+        raise HTTPException(status_code=404, detail="Evidence file not found")
+
+    file_path = Path(submitted.file_path)
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Evidence file missing on disk")
+
+    return FileResponse(
+        path=str(file_path),
+        media_type=submitted.mime_type or "application/octet-stream",
+        filename=submitted.filename,
+    )
 
 
 @router.delete("/sessions/{session_id}", response_model=dict)
