@@ -6,6 +6,7 @@ import json
 
 from backend.database import get_db
 from backend.models.user import User
+from backend.models.case import Case, CourtSessionModel, CourtSubmittedEvidence
 from backend.schemas.court_schemas import (
     CreateSessionRequest,
     CreateSessionResponse,
@@ -28,7 +29,7 @@ from backend.utils.auth_utils import get_current_user, decode_access_token
 from backend.utils.token_tracker import record_tokens
 from pathlib import Path
 import os
-from backend.utils.path_utils import get_extracted_data_path, get_case_extracted_data_path, get_user_evidence_dir
+from backend.utils.path_utils import get_user_evidence_dir
 
 logger = logging.getLogger(__name__)
 
@@ -67,33 +68,59 @@ def get_evidence_service(session_id: str, user_id: str = None) -> EvidenceServic
 
 
 @router.get("/case-data")
-async def get_case_data(user_id: str = "user_1", case_id: int = 1):
+async def get_case_data(
+    user_id: str = "user_1",
+    case_id: int = 1,
+    db: Session = Depends(get_db),
+):
     """
-    Get case data from extracted_data.json file.
+    Get case data from the database.
     Returns the case information for the UI to display.
     """
     try:
-        # Prefer case-specific extracted data; fall back to user-level file
-        case_file = get_case_extracted_data_path(user_id, case_id)
-        if not case_file.exists():
-            logger.warning(f"Case-specific file not found ({case_file}), falling back to user-level extracted_data.json")
-            case_file = get_extracted_data_path(user_id)
-
-        if case_file.exists():
-            with open(case_file, "r") as f:
-                case_data = json.load(f)
-            logger.info(f"Loaded case data for user={user_id} case_id={case_id} from {case_file}")
-            return case_data
-        else:
-            logger.warning(f"Case file not found: {case_file}")
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if not case:
+            # Fallback: get the most recent case for this user
+            case = (
+                db.query(Case)
+                .filter(Case.user_id == user_id)
+                .order_by(Case.id.desc())
+                .first()
+            )
+        if case:
+            plaintiffs = [
+                {"name": p.name, "address": p.address}
+                for p in case.parties if p.role == "plaintiff"
+            ]
+            defendants = [
+                {"name": p.name, "address": p.address}
+                for p in case.parties if p.role == "defendant"
+            ]
+            logger.info(f"Loaded case data for user={user_id} case_id={case_id} from DB")
             return {
-                "case_type": "Small Claims",
-                "state": "Unknown",
-                "plaintiffs": [{"name": "Plaintiff"}],
-                "defendants": [{"name": "Defendant"}],
-                "claim_summary": "Case information not available",
-                "amount_sought": 0
+                "case_number": case.case_number,
+                "case_type": case.case_type,
+                "state": case.state,
+                "county": case.county,
+                "filing_date": case.filing_date.isoformat() if case.filing_date else None,
+                "hearing_date": case.hearing_date,
+                "plaintiffs": plaintiffs,
+                "defendants": defendants,
+                "claim_summary": case.claim_summary,
+                "amount_sought": float(case.amount_sought) if case.amount_sought else 0,
+                "incident_date": case.incident_date.isoformat() if case.incident_date else None,
+                "demand_letter_sent": case.demand_letter_sent,
+                "agreement_included": case.agreement_included,
             }
+        logger.warning(f"Case not found in DB for user={user_id} case_id={case_id}")
+        return {
+            "case_type": "Small Claims",
+            "state": "Unknown",
+            "plaintiffs": [{"name": "Plaintiff"}],
+            "defendants": [{"name": "Defendant"}],
+            "claim_summary": "Case information not available",
+            "amount_sought": 0,
+        }
     except Exception as e:
         logger.error(f"Error loading case data: {e}")
         return {
@@ -102,7 +129,7 @@ async def get_case_data(user_id: str = "user_1", case_id: int = 1):
             "plaintiffs": [{"name": "Plaintiff"}],
             "defendants": [{"name": "Defendant"}],
             "claim_summary": "Error loading case information",
-            "amount_sought": 0
+            "amount_sought": 0,
         }
 
 
@@ -569,6 +596,18 @@ async def upload_evidence(
         file_paths = [f["path"] for f in uploaded]
         court_session.evidence_buffer.extend(file_paths)
 
+        # Record uploaded files in the database linked to this session
+        for f in uploaded:
+            db.add(CourtSubmittedEvidence(
+                session_id=session_id,
+                filename=f["filename"],
+                file_path=f["path"],
+                turn_number=court_session.turn_number,
+                mime_type=f.get("mime_type"),
+                size_bytes=f.get("size_bytes"),
+            ))
+        db.commit()
+
         # Add a system message indicating evidence was submitted
         file_names = [f["filename"] for f in uploaded]
         evidence_msg = f"[Plaintiff submitted evidence: {', '.join(file_names)}]"
@@ -628,9 +667,9 @@ async def get_transcript(
 
         return {
             "history": state["history"],
-            "evidence_count": len(
-                get_evidence_service(session_id).get_evidence_files()
-            ),
+            "evidence_count": db.query(CourtSubmittedEvidence)
+                .filter(CourtSubmittedEvidence.session_id == session_id)
+                .count(),
         }
     except Exception as e:
         logger.error(f"Error retrieving transcript: {e}")

@@ -1,5 +1,4 @@
-import json
-from pathlib import Path
+﻿from pathlib import Path
 from datetime import datetime, date
 from fastapi import APIRouter, HTTPException, UploadFile, Depends
 from pydantic import BaseModel
@@ -7,22 +6,29 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models.user import User
-from backend.models.case import Case as CaseModel, Party as PartyModel
+from backend.models.case import (
+    Case as CaseModel,
+    Party as PartyModel,
+    EvidenceItem as EvidenceItemModel,
+    EvidenceFile as EvidenceFileModel,
+    EvidenceStatus,
+)
 from backend.config import settings
-from backend.services.openai_evidence import recommend_evidence, create_evidence_folders
+from backend.services.openai_evidence import recommend_evidence
 from backend.services.evidence_analysis import evidence_feedback as analyze_evidence_file
 from fastapi import Query
 from backend.utils.path_utils import (
-    get_user_ocr_output_dir,
     get_user_evidence_dir,
-    get_case_extracted_data_path,
-    get_case_evidence_dir,
     get_case_recommend_evidence_dir,
 )
 from backend.utils.auth_utils import get_optional_user
 
 router = APIRouter()
 
+
+# ---------------------------------------------------------------------------
+# Pydantic input/output models
+# ---------------------------------------------------------------------------
 
 class Party(BaseModel):
     name: str
@@ -44,8 +50,73 @@ class CaseDataInput(BaseModel):
     incident_date: Optional[str] = None
     demand_letter_sent: bool = False
     agreement_included: bool = False
-    existing_case_id: Optional[int] = None  # If set, update this case instead of creating a new one
+    existing_case_id: Optional[int] = None  # If set, update this case instead of creating new
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _parse_date(s):
+    if not s:
+        return None
+    if isinstance(s, date):
+        return s
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        return None
+
+
+def _case_model_to_dict(case: CaseModel) -> dict:
+    """Serialize a Case ORM object to the same shape the LLM / analysis code expects."""
+    return {
+        "case_number": case.case_number,
+        "case_type": case.case_type,
+        "state": case.state,
+        "county": case.county,
+        "filing_date": case.filing_date.isoformat() if case.filing_date else None,
+        "hearing_date": case.hearing_date,
+        "plaintiffs": [
+            {"name": p.name, "address": p.address}
+            for p in case.parties if p.role == "plaintiff"
+        ],
+        "defendants": [
+            {"name": p.name, "address": p.address}
+            for p in case.parties if p.role == "defendant"
+        ],
+        "claim_summary": case.claim_summary,
+        "amount_sought": float(case.amount_sought) if case.amount_sought else None,
+        "incident_date": case.incident_date.isoformat() if case.incident_date else None,
+        "demand_letter_sent": case.demand_letter_sent,
+        "agreement_included": case.agreement_included,
+    }
+
+
+def _save_evidence_items(case_id: int, evidence_dict: dict, db: Session):
+    """
+    Persist evidence recommendations as EvidenceItem rows.
+    Skips names that already exist for this case.
+    """
+    existing_names = {
+        row.evidence_name
+        for row in db.query(EvidenceItemModel.evidence_name)
+                      .filter_by(case_id=case_id)
+                      .all()
+    }
+    for name, description in evidence_dict.items():
+        if name not in existing_names:
+            db.add(EvidenceItemModel(
+                case_id=case_id,
+                evidence_name=name,
+                description=description,
+            ))
+    db.commit()
+
+
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
 
 @router.post("/submit-case/{user_id}")
 def submit_case_data(
@@ -55,30 +126,13 @@ def submit_case_data(
     current_user: Optional[User] = Depends(get_optional_user)
 ):
     """
-    Accept manually entered case data from the frontend form,
-    save it as extracted_data.json, and generate evidence recommendations.
+    Accept manually entered case data from the frontend form, save/update the
+    Case row in the database, generate evidence recommendations via Gemini, and
+    persist them as EvidenceItem rows.  No JSON files are written to disk.
     """
-    # Use authenticated user_id if available, otherwise use path user_id
     effective_user_id = current_user.id if current_user else user_id
 
-    # Convert to dict for JSON storage
-    data_dict = case_data.model_dump()
-
-    # Convert Party objects to dicts
-    data_dict["plaintiffs"] = [{"name": p.name, "address": p.address} for p in case_data.plaintiffs]
-    data_dict["defendants"] = [{"name": d.name, "address": d.address} for d in case_data.defendants]
-
-    def _parse_date(s):
-        if not s:
-            return None
-        if isinstance(s, date):
-            return s
-        try:
-            return datetime.strptime(s, "%Y-%m-%d").date()
-        except (ValueError, TypeError):
-            return None
-
-    # If the case was already created by OCR, update it instead of creating a duplicate
+    # ---------- Upsert Case in DB ----------
     if case_data.existing_case_id is not None:
         existing_case = db.query(CaseModel).filter_by(id=case_data.existing_case_id).first()
         if existing_case and existing_case.user_id == effective_user_id:
@@ -95,7 +149,6 @@ def submit_case_data(
             existing_case.agreement_included = case_data.agreement_included
             existing_case.status = "active"
 
-            # Replace parties
             for party in list(existing_case.parties):
                 db.delete(party)
             db.flush()
@@ -106,13 +159,12 @@ def submit_case_data(
 
             db.commit()
             case_id = existing_case.id
+            case_obj = existing_case
             print(f"[CASE] Updated existing OCR case {case_id} for user {effective_user_id}")
         else:
-            # Fallback: create new if existing case not found or belongs to another user
             case_data.existing_case_id = None
 
     if case_data.existing_case_id is None:
-        # Create a new Case DB record so this case appears in the dashboard
         new_case = CaseModel(
             user_id=effective_user_id,
             case_number=case_data.case_number,
@@ -129,7 +181,7 @@ def submit_case_data(
             status="active",
         )
         db.add(new_case)
-        db.flush()  # Get the new case ID before committing
+        db.flush()
 
         for p in case_data.plaintiffs:
             db.add(PartyModel(case_id=new_case.id, role="plaintiff", name=p.name, address=p.address))
@@ -138,52 +190,28 @@ def submit_case_data(
 
         db.commit()
         case_id = new_case.id
-
-    # Save extracted data at both user-level (legacy) and case-specific path
-    ocr_output_dir = get_user_ocr_output_dir(effective_user_id)
-    json_path = ocr_output_dir / "extracted_data.json"
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(data_dict, f, indent=4, ensure_ascii=False)
-
-    case_extracted_path = get_case_extracted_data_path(effective_user_id, case_id)
-    with open(case_extracted_path, "w", encoding="utf-8") as f:
-        json.dump(data_dict, f, indent=4, ensure_ascii=False)
+        case_obj = new_case
 
     print(f"[CASE] Saved case data for user {effective_user_id}, case_id={case_id}")
 
-    # Generate evidence recommendations using Gemini
+    # ---------- Generate evidence recommendations ----------
+    case_dict = _case_model_to_dict(case_obj)
     try:
-        evidence_dict = recommend_evidence(data_dict, settings.GEMINI_API_KEY)
+        evidence_dict = recommend_evidence(case_dict, settings.GEMINI_API_KEY)
         print(f"[EVIDENCE] Generated {len(evidence_dict)} recommendations via Gemini")
     except Exception as e:
         print(f"[WARN] Gemini API failed ({e}), using fallback recommendations")
-        evidence_dict = _fallback_recommendations(data_dict)
+        evidence_dict = _fallback_recommendations(case_dict)
 
-    # Save recommendations at user-level (legacy) and case-specific path
-    evidence_dir = get_user_evidence_dir(effective_user_id)
-    conversation_path = evidence_dir / "evidence_conversation.json"
-    with open(conversation_path, "w", encoding="utf-8") as f:
-        json.dump(evidence_dict, f, indent=4)
-
-    case_evidence_dir = get_case_evidence_dir(effective_user_id, case_id)
-    case_conv_path = case_evidence_dir / "evidence_conversation.json"
-    with open(case_conv_path, "w", encoding="utf-8") as f:
-        json.dump(evidence_dict, f, indent=4)
-
-    # Create folder structure (user-level legacy path)
-    recommend_folder = evidence_dir / "recommend_evidence"
-    create_evidence_folders(evidence_dict, str(recommend_folder))
-
-    # Also create case-specific folder structure so uploads/analysis use the right path
-    case_recommend_folder = get_case_recommend_evidence_dir(effective_user_id, case_id)
-    create_evidence_folders(evidence_dict, str(case_recommend_folder))
+    # ---------- Persist recommendations to DB ----------
+    _save_evidence_items(case_id, evidence_dict, db)
 
     return {
         "success": True,
         "user_id": effective_user_id,
         "case_id": case_id,
         "recommendations": evidence_dict,
-        "message": "Case data saved and evidence recommendations generated"
+        "message": "Case data saved and evidence recommendations generated",
     }
 
 
@@ -193,46 +221,33 @@ def get_evidence_recommendations(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user)
 ):
-    """
-    Read extracted case data, call Gemini to recommend evidence,
-    create folder structure, and return the recommendations.
-    """
-    # Use authenticated user_id if available, otherwise use path user_id
+    """Return evidence recommendations for the user's most recent case from the database."""
     effective_user_id = current_user.id if current_user else user_id
 
-    # Load case data
-    json_path = get_user_ocr_output_dir(effective_user_id) / "extracted_data.json"
-    if not json_path.exists():
-        raise HTTPException(404, f"No extracted data found for user {effective_user_id}")
+    case = (
+        db.query(CaseModel)
+        .filter(CaseModel.user_id == effective_user_id)
+        .order_by(CaseModel.id.desc())
+        .first()
+    )
+    if not case:
+        raise HTTPException(404, f"No case found for user {effective_user_id}")
 
-    with open(json_path, "r", encoding="utf-8") as f:
-        case_data = json.load(f)
+    items = db.query(EvidenceItemModel).filter_by(case_id=case.id).all()
 
-    # Check if recommendations already exist
-    evidence_dir = get_user_evidence_dir(effective_user_id)
-    conversation_path = evidence_dir / "evidence_conversation.json"
-
-    if conversation_path.exists():
-        with open(conversation_path, "r", encoding="utf-8") as f:
-            evidence_dict = json.load(f)
+    if items:
+        evidence_dict = {item.evidence_name: item.description for item in items}
         return {"recommendations": evidence_dict, "cached": True}
 
-    # Call Gemini, fall back to rule-based recommendations if API fails
+    # Nothing in DB yet â€” generate and save
+    case_dict = _case_model_to_dict(case)
     try:
-        evidence_dict = recommend_evidence(case_data, settings.GEMINI_API_KEY)
+        evidence_dict = recommend_evidence(case_dict, settings.GEMINI_API_KEY)
     except Exception as e:
         print(f"[WARN] Gemini API failed ({e}), using fallback recommendations")
-        evidence_dict = _fallback_recommendations(case_data)
+        evidence_dict = _fallback_recommendations(case_dict)
 
-    # Save recommendations
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-    with open(conversation_path, "w", encoding="utf-8") as f:
-        json.dump(evidence_dict, f, indent=4)
-
-    # Create folder structure
-    recommend_folder = evidence_dir / "recommend_evidence"
-    create_evidence_folders(evidence_dict, str(recommend_folder))
-
+    _save_evidence_items(case.id, evidence_dict, db)
     return {"recommendations": evidence_dict, "cached": False}
 
 
@@ -241,55 +256,27 @@ def get_evidence_recommendations_for_case(
     case_id: int,
     db: Session = Depends(get_db),
 ):
-    """
-    Return evidence recommendations for a specific case.
-
-    Lookup order:
-    1. Case-specific recommendations file (fastest, already generated).
-    2. Case-specific extracted data → generate + cache recommendations.
-    3. User-level evidence_conversation.json fallback (backwards-compat).
-    """
+    """Return evidence recommendations for a specific case from the database."""
     case = db.query(CaseModel).filter_by(id=case_id).first()
     if not case:
         raise HTTPException(404, "Case not found")
 
-    user_id = case.user_id
+    items = db.query(EvidenceItemModel).filter_by(case_id=case_id).all()
 
-    # 1. Case-specific cached recommendations
-    case_ev_dir = get_case_evidence_dir(user_id, case_id)
-    case_conv_path = case_ev_dir / "evidence_conversation.json"
-
-    if case_conv_path.exists():
-        with open(case_conv_path, "r", encoding="utf-8") as f:
-            evidence_dict = json.load(f)
+    if items:
+        evidence_dict = {item.evidence_name: item.description for item in items}
         return {"recommendations": evidence_dict, "cached": True}
 
-    # 2. Generate from case-specific extracted data
-    case_extracted_path = get_case_extracted_data_path(user_id, case_id)
-    user_extracted_path = get_user_ocr_output_dir(user_id) / "extracted_data.json"
-
-    if case_extracted_path.exists():
-        with open(case_extracted_path, "r", encoding="utf-8") as f:
-            case_data = json.load(f)
-    elif user_extracted_path.exists():
-        # Fallback: use the shared extracted data (may belong to a different case)
-        with open(user_extracted_path, "r", encoding="utf-8") as f:
-            case_data = json.load(f)
-    else:
-        raise HTTPException(404, "No case data available to generate recommendations")
-
+    # Generate and save
+    case_dict = _case_model_to_dict(case)
     try:
-        evidence_dict = recommend_evidence(case_data, settings.GEMINI_API_KEY)
+        evidence_dict = recommend_evidence(case_dict, settings.GEMINI_API_KEY)
         print(f"[EVIDENCE] Generated {len(evidence_dict)} recommendations for case {case_id}")
     except Exception as e:
         print(f"[WARN] Gemini API failed ({e}), using fallback recommendations")
-        evidence_dict = _fallback_recommendations(case_data)
+        evidence_dict = _fallback_recommendations(case_dict)
 
-    # Cache at case-specific path for future requests
-    case_ev_dir.mkdir(parents=True, exist_ok=True)
-    with open(case_conv_path, "w", encoding="utf-8") as f:
-        json.dump(evidence_dict, f, indent=4)
-
+    _save_evidence_items(case_id, evidence_dict, db)
     return {"recommendations": evidence_dict, "cached": False}
 
 
@@ -299,10 +286,11 @@ async def upload_evidence_file(
     folder_name: str,
     file: UploadFile,
     case_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
 ):
     """
-    Upload an evidence file to the appropriate folder.
-    When case_id is provided, files are stored in the case-specific evidence directory.
+    Upload an evidence file.  The binary is saved to the local filesystem so
+    Gemini can read it; metadata is stored in the EvidenceFile DB table.
     """
     if case_id is not None:
         evidence_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
@@ -315,6 +303,23 @@ async def upload_evidence_file(
     content = await file.read()
     with open(file_path, "wb") as f:
         f.write(content)
+
+    # Record the file in the DB if we can link it to an EvidenceItem
+    if case_id is not None:
+        evidence_item = (
+            db.query(EvidenceItemModel)
+            .filter_by(case_id=case_id, evidence_name=folder_name)
+            .first()
+        )
+        if evidence_item:
+            db.add(EvidenceFileModel(
+                evidence_item_id=evidence_item.id,
+                filename=file.filename,
+                file_path=str(file_path),
+                mime_type=file.content_type,
+                size_bytes=len(content),
+            ))
+            db.commit()
 
     return {
         "filename": file.filename,
@@ -331,67 +336,165 @@ def analyze_evidence(
     db: Session = Depends(get_db),
 ):
     """
-    Analyze uploaded evidence files in a folder using the evidence_feedback module.
-    When case_id is provided, uses case-specific data and evidence paths.
-    Returns feedback for each file.
+    Analyze uploaded evidence files.  Case data and evidence description are
+    read from the database; feedback is written back to EvidenceFile rows in
+    the database (no feedback_*.md files on disk).
     """
-    # Load case data — prefer case-specific extracted data
+    # ---------- Load case data from DB ----------
     if case_id is not None:
-        json_path = get_case_extracted_data_path(user_id, case_id)
-        if not json_path.exists():
-            # Fall back to user-level file
-            json_path = get_user_ocr_output_dir(user_id) / "extracted_data.json"
+        case = db.query(CaseModel).filter_by(id=case_id).first()
+        if not case:
+            raise HTTPException(404, f"Case {case_id} not found")
+        case_data = _case_model_to_dict(case)
     else:
-        json_path = get_user_ocr_output_dir(user_id) / "extracted_data.json"
-
-    if not json_path.exists():
-        raise HTTPException(404, "No extracted data found")
-
-    with open(json_path, "r", encoding="utf-8") as f:
-        case_data = json.load(f)
-
-    # Resolve evidence folder — prefer case-specific path
-    if case_id is not None:
-        evidence_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
-    else:
-        evidence_folder = get_user_evidence_dir(user_id) / "recommend_evidence" / folder_name
-    desc_path = evidence_folder / "description.txt"
-    if not desc_path.exists():
-        raise HTTPException(404, f"Evidence folder '{folder_name}' not found")
-
-    with open(desc_path, "r", encoding="utf-8") as f:
-        description = f.read()
-
-    # Find evidence files (exclude description.txt and feedback_*.md files)
-    evidence_files = [
-        f for f in evidence_folder.iterdir()
-        if f.is_file() and f.name != "description.txt" and not f.name.startswith("feedback_")
-    ]
-
-    if not evidence_files:
-        raise HTTPException(400, "No evidence files found in this folder")
-
-    # Analyze each file using the evidence_analysis service
-    # (replicates exact prompt & multimodal logic from evidence_feedback/)
-    results = []
-    for ev_file in evidence_files:
-        ready_status, feedback = analyze_evidence_file(
-            case_data, description, [str(ev_file)], settings.GEMINI_API_KEY
+        # Fallback: use the most recent case for this user
+        case = (
+            db.query(CaseModel)
+            .filter(CaseModel.user_id == user_id)
+            .order_by(CaseModel.id.desc())
+            .first()
         )
+        if not case:
+            raise HTTPException(404, "No case found for this user")
+        case_data = _case_model_to_dict(case)
+        case_id = case.id
+
+    # ---------- Load evidence description from DB ----------
+    evidence_item = (
+        db.query(EvidenceItemModel)
+        .filter_by(case_id=case_id, evidence_name=folder_name)
+        .first()
+    )
+    if not evidence_item:
+        raise HTTPException(404, f"Evidence folder '{folder_name}' not found in database")
+
+    description = evidence_item.description
+
+    # ---------- Collect evidence files ----------
+    # Prefer DB records; fall back to scanning the filesystem folder
+    db_files = db.query(EvidenceFileModel).filter_by(evidence_item_id=evidence_item.id).all()
+
+    if db_files:
+        evidence_file_paths = [ef.file_path for ef in db_files]
+    else:
+        # Scan filesystem (handles files uploaded before DB tracking was added)
+        if case_id is not None:
+            evidence_folder = get_case_recommend_evidence_dir(user_id, case_id) / folder_name
+        else:
+            evidence_folder = get_user_evidence_dir(user_id) / "recommend_evidence" / folder_name
+
+        if not evidence_folder.exists():
+            raise HTTPException(400, f"Evidence folder '{folder_name}' does not exist on disk")
+
+        evidence_file_paths = [
+            str(f) for f in evidence_folder.iterdir()
+            if f.is_file()
+            and f.name != "description.txt"
+            and not f.name.startswith("feedback_")
+        ]
+
+    if not evidence_file_paths:
+        raise HTTPException(400, "No evidence files found for this folder")
+
+    # ---------- Analyze and save feedback to DB ----------
+    results = []
+    any_ready = False
+
+    for file_path in evidence_file_paths:
+        filename = Path(file_path).name
+        ready_status, feedback = analyze_evidence_file(
+            case_data, description, [file_path], settings.GEMINI_API_KEY
+        )
+
+        if ready_status:
+            any_ready = True
+
+        # Update or create EvidenceFile DB record
+        ev_file = next(
+            (ef for ef in db_files if ef.file_path == file_path),
+            None,
+        )
+        if ev_file:
+            ev_file.feedback = feedback
+            ev_file.is_ready = ready_status
+        else:
+            db.add(EvidenceFileModel(
+                evidence_item_id=evidence_item.id,
+                filename=filename,
+                file_path=file_path,
+                feedback=feedback,
+                is_ready=ready_status,
+            ))
+
         results.append({
-            "filename": ev_file.name,
+            "filename": filename,
             "ready_status": ready_status,
             "specific_feedback": feedback,
         })
 
-        # Write per-file feedback file
-        status_label = "READY" if ready_status else "NOT READY"
-        feedback_filename = f"feedback_{ev_file.stem}.md"
-        with open(evidence_folder / feedback_filename, "w", encoding="utf-8") as f:
-            f.write(f"STATUS: {status_label}\n\n{feedback}")
+    # Update parent EvidenceItem status
+    evidence_item.status = EvidenceStatus.READY if any_ready else EvidenceStatus.NOT_READY
+    db.commit()
 
     return {"folder": folder_name, "results": results}
 
+
+@router.get("/status/{user_id}")
+def get_evidence_status(
+    user_id: str,
+    case_id: Optional[int] = Query(None),
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns readiness status for each evidence category.
+    Reads entirely from the database â€” no filesystem scanning.
+    """
+    effective_user_id = current_user.id if current_user else user_id
+
+    if case_id is None:
+        # Determine the latest case for this user
+        case = (
+            db.query(CaseModel)
+            .filter(CaseModel.user_id == effective_user_id)
+            .order_by(CaseModel.id.desc())
+            .first()
+        )
+        if not case:
+            return {"status": {}}
+        case_id = case.id
+
+    items = db.query(EvidenceItemModel).filter_by(case_id=case_id).all()
+    status: dict = {}
+
+    for item in items:
+        files_info = []
+        file_feedbacks: dict = {}
+        is_ready = False
+
+        for ef in item.files:
+            files_info.append(ef.filename)
+            if ef.is_ready:
+                is_ready = True
+            if ef.feedback:
+                stem = Path(ef.filename).stem
+                file_feedbacks[stem] = ef.feedback
+
+        status[item.evidence_name] = {
+            "has_files": len(files_info) > 0,
+            "file_count": len(files_info),
+            "files": files_info,
+            "is_ready": is_ready,
+            "file_feedbacks": file_feedbacks,
+            "description": item.description,
+        }
+
+    return {"status": status}
+
+
+# ---------------------------------------------------------------------------
+# Fallback evidence recommendations (no LLM)
+# ---------------------------------------------------------------------------
 
 def _fallback_recommendations(case_data: dict) -> dict:
     """Generate basic evidence recommendations without an LLM call."""
@@ -401,7 +504,6 @@ def _fallback_recommendations(case_data: dict) -> dict:
 
     recs = {}
 
-    # Always useful
     recs["Incident_Documentation"] = (
         f"Any documents, photos, or records that describe the incident involving {defendant}. "
         "This could include written accounts, dated notes, or official reports."
@@ -436,88 +538,3 @@ def _fallback_recommendations(case_data: dict) -> dict:
 
     return recs
 
-
-@router.get("/status/{user_id}")
-def get_evidence_status(
-    user_id: str,
-    case_id: Optional[int] = Query(None),
-    current_user: Optional[User] = Depends(get_optional_user),
-):
-    """
-    Returns readiness status for each evidence folder.
-    When case_id is provided, reads from the case-specific recommend_evidence folder.
-    """
-    effective_user_id = current_user.id if current_user else user_id
-    if case_id is not None:
-        recommend_folder = get_case_recommend_evidence_dir(effective_user_id, case_id)
-    else:
-        evidence_dir = get_user_evidence_dir(effective_user_id)
-        recommend_folder = evidence_dir / "recommend_evidence"
-
-    if not recommend_folder.exists():
-        return {"status": {}}
-
-    SYSTEM_FILES = {"description.txt", ".DS_Store", "processed_tracker.json", "evidence_boolean.json"}
-    status: dict = {}
-
-    for folder in recommend_folder.iterdir():
-        if not folder.is_dir():
-            continue
-
-        folder_name = folder.name
-
-        # List actual evidence files (exclude system and feedback files)
-        files = [
-            f.name for f in folder.iterdir()
-            if f.is_file()
-            and f.name not in SYSTEM_FILES
-            and not f.name.startswith("feedback_")
-            and f.name != "feedback.md"
-        ]
-
-        # Determine readiness and collect per-file feedback by scanning feedback files.
-        # Supports both new-style "feedback_{stem}.md" and legacy "feedback.md".
-        is_ready = False
-        file_feedbacks: dict = {}  # stem -> feedback_text
-
-        for feedback_file in folder.iterdir():
-            if not feedback_file.is_file():
-                continue
-
-            is_new_style = feedback_file.name.startswith("feedback_")
-            is_old_style = feedback_file.name == "feedback.md"
-
-            if not (is_new_style or is_old_style):
-                continue
-
-            try:
-                content = feedback_file.read_text(encoding="utf-8")
-                if "STATUS: READY" in content:
-                    is_ready = True
-
-                # Extract feedback text (strip the "STATUS: ...\n\n" header)
-                parts = content.split("\n\n", 1)
-                feedback_text = parts[1].strip() if len(parts) > 1 else content.strip()
-
-                if is_new_style:
-                    # "feedback_invoice.md" → stem "invoice"
-                    stem = feedback_file.stem[len("feedback_"):]
-                else:
-                    # Legacy single-file feedback; use sentinel so FE can apply to all files
-                    stem = "_all_"
-
-                if stem and feedback_text:
-                    file_feedbacks[stem] = feedback_text
-
-            except OSError:
-                pass
-
-        status[folder_name] = {
-            "has_files": len(files) > 0,
-            "file_count": len(files),
-            "files": files,
-            "is_ready": is_ready,
-            "file_feedbacks": file_feedbacks,
-        }
-
-    return {"status": status}

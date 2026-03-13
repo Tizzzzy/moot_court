@@ -204,18 +204,6 @@ class CourtSessionService:
             .first()
         )
 
-        # Save transcript to user-specific path
-        if court_session and db_session:
-            evidence_dir = get_user_evidence_dir(db_session.user_id)
-            transcript_path = evidence_dir / "court_transcript.json"
-
-            # Ensure directory exists
-            transcript_path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Save transcript using CourtSession method
-            court_session.save_transcript(str(transcript_path))
-            logger.info(f"Session {session_id}: Transcript saved to {transcript_path}")
-
         # Update state_snapshot with final history (ensures Judge's last message is persisted)
         if court_session and db_session:
             db_session.state_snapshot = self._serialize_session(court_session)

@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from backend.models.case import ProcessingJob, Case, Party, JobStatus
 from backend.config import settings
-from backend.utils.path_utils import get_user_ocr_output_dir, get_case_extracted_data_path
 
 
 def parse_date(date_string):
@@ -73,38 +72,6 @@ def run_ocr_pipeline(job_id: str, file_path: str, user_id: str):
             db.add(party)
 
         db.commit()
-
-        # Step 4: Write extracted_data.json to file system for evidence pipeline
-        ocr_output_dir = get_user_ocr_output_dir(user_id)
-        json_output_path = ocr_output_dir / "extracted_data.json"
-
-        # Format data to match expected structure
-        output_data = {
-            "case_number": extracted_data.get("case_number"),
-            "case_type": extracted_data["case_type"],
-            "state": extracted_data["state"],
-            "county": extracted_data["county"],
-            "filing_date": extracted_data.get("filing_date"),
-            "hearing_date": extracted_data.get("hearing_date"),
-            "plaintiffs": extracted_data.get("plaintiffs", []),
-            "defendants": extracted_data.get("defendants", []),
-            "claim_summary": extracted_data["claim_summary"],
-            "amount_sought": extracted_data.get("amount_sought"),
-            "incident_date": extracted_data.get("incident_date"),
-            "demand_letter_sent": extracted_data.get("demand_letter_sent", False),
-            "agreement_included": extracted_data.get("agreement_included", False)
-        }
-
-        with open(json_output_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=4, default=str)
-
-        print(f"[OCR] Saved extracted data to: {json_output_path}")
-
-        # Save case-specific extracted data for per-case evidence recommendations
-        case_specific_path = get_case_extracted_data_path(user_id, case.id)
-        with open(case_specific_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=4, default=str)
-        print(f"[OCR] Saved case-specific extracted data to: {case_specific_path}")
 
         # Update job
         job.status = JobStatus.COMPLETED

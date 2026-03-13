@@ -59,6 +59,7 @@ target: 'http://3.135.62.13:8000',
 
 front_end/front_end_1/.env.development
 VITE_API_BASE_URL=http://3.135.62.13:8000/api
+VITE_WS_BASE_URL=ws://3.135.62.13:8000/api
 
 ssh -i "tizzyec.pem" ec2-user@3.135.62.13
 

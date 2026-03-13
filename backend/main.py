@@ -14,6 +14,7 @@ from backend.config import settings
 from backend.utils.path_utils import validate_path_config
 from backend.models import user as user_model  # Ensure users table is created
 from backend.models import verification_token as verification_token_model  # Ensure verification_tokens table is created
+from backend.models import case as case_model  # Ensure all case/evidence tables are created
 
 
 @asynccontextmanager
