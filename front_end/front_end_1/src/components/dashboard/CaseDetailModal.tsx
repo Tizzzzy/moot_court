@@ -223,8 +223,7 @@ export default function CaseDetailModal({
                 <div className="flex-1 flex flex-col gap-[4px]">
                   <label className="font-medium text-[14px] text-[#0a0a0a]">Hearing Date</label>
                   <input
-                    type="text"
-                    placeholder="e.g., March 15, 2026"
+                    type="date"
                     className="h-[36px] px-[12px] border border-[rgba(0,0,0,0.12)] rounded-[8px] text-[14px] focus:outline-none focus:border-[#2b7fff]"
                     value={hearingDate}
                     onChange={(e) => setHearingDate(e.target.value)}
