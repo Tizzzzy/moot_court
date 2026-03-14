@@ -1,5 +1,5 @@
 import svgPaths from "./svg-ibhdws6lmz";
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
 interface LandingAuthCtx { isAuthenticated: boolean; username?: string; userButton?: React.ReactNode; }
 const LandingAuthCtx = createContext<LandingAuthCtx>({ isAuthenticated: false });
@@ -1355,6 +1355,20 @@ function Div() {
 }
 
 export default function DesignAiCourtroomCoachLandingPage({ isAuthenticated = false, username, userButton }: { isAuthenticated?: boolean; username?: string; userButton?: React.ReactNode } = {}) {
+  
+  useEffect(() => {
+    // Check if the URL has our specific hash
+    if (window.location.hash === '#start-new-case') {
+      // Use a tiny timeout to ensure React has finished painting the DOM
+      setTimeout(() => {
+        const element = document.getElementById('start-new-case');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100); 
+    }
+  }, []);
+  
   return (
     <LandingAuthCtx.Provider value={{ isAuthenticated, username, userButton }}>
       <div className="bg-[#f8f9fa] content-stretch flex flex-col items-center relative w-full" data-name="Design AI Courtroom Coach Landing Page">
