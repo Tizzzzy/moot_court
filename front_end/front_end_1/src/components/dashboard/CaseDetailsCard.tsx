@@ -112,15 +112,21 @@ export function CaseDetailsCard({ caseData, isLoading, onViewMore }: CaseDetails
 
 function calculateDaysAway(dateString: string): number {
   try {
-    const parts = dateString.split(',');
-    if (parts.length < 2) return -1;
+    // Replace dashes with slashes (e.g., '2026/03/15') to force JavaScript 
+    // to interpret it as a local timezone date rather than UTC, 
+    // preventing off-by-one-day errors.
+    const normalizedDateString = dateString.includes('-') 
+      ? dateString.replace(/-/g, '/') 
+      : dateString;
 
-    const dayMonth = parts[0].trim();
-    const year = parts[1].trim();
+    const hearingDate = new Date(normalizedDateString);
+    
+    // Check if the resulting date is valid
+    if (isNaN(hearingDate.getTime())) return -1;
 
-    const hearingDate = new Date(`${dayMonth} ${year}`);
     const today = new Date();
 
+    // Normalize both to midnight local time
     today.setHours(0, 0, 0, 0);
     hearingDate.setHours(0, 0, 0, 0);
 
