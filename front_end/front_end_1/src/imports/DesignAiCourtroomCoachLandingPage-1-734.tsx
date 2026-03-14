@@ -879,7 +879,7 @@ function Section1() {
 
 function H10() {
   return (
-    <div id="start-new-case" className="absolute h-[40px] left-0 top-0 w-[1023px]" data-name="h2">
+    <div className="absolute h-[40px] left-0 top-0 w-[1023px]" data-name="h2">
       <p className="-translate-x-1/2 absolute font-['Inter:Medium',sans-serif] font-medium leading-[40px] left-[512.2px] not-italic text-[#101828] text-[36px] text-center top-[0.5px] tracking-[0.3691px] whitespace-nowrap">Simple, guided preparation</p>
     </div>
   );
@@ -1252,7 +1252,7 @@ function CaseIntake() {
 
 function Section2() {
   return (
-    <div className="bg-[#f8f9fa] h-[890.75px] relative shrink-0 w-full" data-name="Section">
+    <div id="start-new-case" className="bg-[#f8f9fa] h-[890.75px] relative shrink-0 w-full" data-name="Section">
       <Container39 />
       <CaseIntake />
     </div>
