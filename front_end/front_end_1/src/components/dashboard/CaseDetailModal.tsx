@@ -49,6 +49,7 @@ export default function CaseDetailModal({
   const [plaintiffAddress, setPlaintiffAddress] = useState("");
   const [defendantName, setDefendantName] = useState("");
   const [defendantAddress, setDefendantAddress] = useState("");
+  const todayString = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!isOpen || caseId === null) return;
@@ -215,6 +216,7 @@ export default function CaseDetailModal({
                   <label className="font-medium text-[14px] text-[#0a0a0a]">Filing Date</label>
                   <input
                     type="date"
+                    max={todayString}
                     className="h-[36px] px-[12px] border border-[rgba(0,0,0,0.12)] rounded-[8px] text-[14px] focus:outline-none focus:border-[#2b7fff]"
                     value={filingDate}
                     onChange={(e) => setFilingDate(e.target.value)}
@@ -224,6 +226,7 @@ export default function CaseDetailModal({
                   <label className="font-medium text-[14px] text-[#0a0a0a]">Hearing Date</label>
                   <input
                     type="date"
+                    min={todayString}
                     className="h-[36px] px-[12px] border border-[rgba(0,0,0,0.12)] rounded-[8px] text-[14px] focus:outline-none focus:border-[#2b7fff]"
                     value={hearingDate}
                     onChange={(e) => setHearingDate(e.target.value)}
@@ -294,6 +297,7 @@ export default function CaseDetailModal({
                 <label className="font-medium text-[14px] text-[#0a0a0a]">Incident Date</label>
                 <input
                   type="date"
+                  max={todayString}
                   className="h-[36px] px-[12px] border border-[rgba(0,0,0,0.12)] rounded-[8px] text-[14px] focus:outline-none focus:border-[#2b7fff] w-full sm:w-1/2"
                   value={incidentDate}
                   onChange={(e) => setIncidentDate(e.target.value)}
