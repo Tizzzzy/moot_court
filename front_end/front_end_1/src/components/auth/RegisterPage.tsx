@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, Loader2, Mail, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Loader2, Mail, ArrowLeft, X } from 'lucide-react';
 import authService from '@/services/authService';
 
 type Step = 'form' | 'verify';
@@ -23,6 +23,10 @@ export const RegisterPage: React.FC = () => {
   // Step 2 field
   const [otp, setOtp] = useState('');
 
+  // Terms & Conditions
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -34,6 +38,10 @@ export const RegisterPage: React.FC = () => {
 
     if (!username || !email || !password || !confirmPassword) {
       setLocalError('Please fill in all fields');
+      return;
+    }
+    if (!agreedToTerms) {
+      setLocalError('You must agree to the Terms of Service to create an account');
       return;
     }
     if (!EMAIL_REGEX.test(email)) {
@@ -171,6 +179,32 @@ export const RegisterPage: React.FC = () => {
                   />
                 </div>
 
+                {/* --- NEW TERMS CHECKBOX --- */}
+                <div className="flex items-start gap-3 mt-2 mb-1">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 text-[#3b82f6] border-gray-300 rounded focus:ring-[#3b82f6] cursor-pointer"
+                    disabled={isSendingOtp}
+                  />
+                  <label htmlFor="terms" className="text-sm text-[#4a5565] leading-snug cursor-pointer">
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTermsModal(true);
+                      }}
+                      className="font-semibold text-[#155dfc] hover:underline focus:outline-none"
+                    >
+                      Terms of Service and Privacy Policy
+                    </button>
+                  </label>
+                </div>
+                {/* --------------------------- */}
+
                 <button
                   type="submit"
                   disabled={isSendingOtp}
@@ -269,6 +303,61 @@ export const RegisterPage: React.FC = () => {
 
         </div>
       </div>
+
+      {/* --- NEW TERMS MODAL --- */}
+      {showTermsModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[14px] shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-[#101828]">Terms of Service</h2>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <X className="w-5 h-5 text-[#4a5565]" />
+              </button>
+            </div>
+            
+            {/* Scrollable content area where your Markdown will eventually go */}
+            <div className="p-6 overflow-y-auto flex-1">
+              <div className="text-sm text-[#4a5565] space-y-4">
+                <p className="italic">
+                  [Note: This section will load content from your markdown file in the future.]
+                </p>
+                <p>
+                  By using Pro Se Pro, you acknowledge and agree that this service is an AI-powered educational tool designed to help you organize and practice for small claims court. 
+                </p>
+                <p className="font-semibold text-[#101828]">
+                  Pro Se Pro does not provide legal advice, and using this service does not create an attorney-client relationship.
+                </p>
+                <p>
+                  You are solely responsible for verifying any legal information, procedures, and deadlines specific to your jurisdiction.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-gray-100 flex justify-end gap-3">
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="px-4 py-2 text-sm font-medium text-[#4a5565] hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setAgreedToTerms(true);
+                  setShowTermsModal(false);
+                }}
+                className="px-4 py-2 bg-[#3b82f6] text-white rounded-lg text-sm font-medium hover:bg-[#2563eb] transition-colors"
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ------------------------- */}
+
     </div>
   );
 };
