@@ -285,7 +285,7 @@ export function DashboardPage() {
                     Hi, {dashboardSummary?.username || "there"}
                   </h1>
                   <button
-                    onClick={() => navigate('/#start-new-case', { state: { forceShowLanding: true } })}
+                    onClick={() => navigate('/#start-new-case')}
                     className="h-[36px] px-[14px] bg-[#155dfc] text-white text-[14px] font-medium rounded-[8px] hover:bg-[#1447e6] transition-colors flex items-center gap-[6px]"
                   >
                     <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 14 14">
