@@ -311,11 +311,11 @@ export function CourtPage() {
 
   return (
     <div className="min-h-screen bg-[#f9fafb]">
-      {currentScreen === 'hearing' && !courtSession.wsConnected && (
+      {/* {currentScreen === 'hearing' && !courtSession.wsConnected && (
         <div className="fixed top-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded-md text-sm z-50">
           Reconnecting to courtroom...
         </div>
-      )}
+      )} */}
 
       {currentScreen === 'hearing' && courtSession.isLoading && (
         <div className="fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-800 px-4 py-2 rounded-md text-sm z-50">
