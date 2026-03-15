@@ -27,12 +27,23 @@ export function DashboardHeader({
     <header className="w-full border-b border-gray-100 bg-white h-20">
       <div className="max-w-[1256px] mx-auto px-6 h-full flex items-center justify-between">
         {/* Left: App Name + BETA Badge */}
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-gray-900">Moot Court AI</h1>
-          <span className="px-2 py-1 bg-[#dbeafe] border border-[#bedbff] text-[#1447e6] text-xs font-medium rounded">
-            BETA
-          </span>
-          <p className="text-sm text-gray-600 ml-2">Legal case preparation assistant</p>
+        <div className="flex flex-col items-start justify-center">
+          <div className="flex items-center gap-[8px] h-[28px]">
+            <h1 className="font-semibold text-[#101828] text-[18px] tracking-[-0.4395px]">
+              Pro Se Pro
+            </h1>
+            <div className="flex items-center gap-[6px]">
+              <span className="bg-[#dbeafe] border border-[#bedbff] text-[#1447e6] text-[12px] font-medium px-[9px] py-[3px] rounded-[4px] leading-none">
+                BETA
+              </span>
+              <span className="bg-[#dcfce7] border border-[#b9f8cf] text-[#008236] text-[12px] font-medium px-[9px] py-[3px] rounded-[4px] leading-none">
+                FREE
+              </span>
+            </div>
+          </div>
+          <p className="font-normal text-[#4a5565] text-[14px] leading-[20px] tracking-[-0.1504px] mt-0.5">
+            Help Small Claims Plaintiffs Prepare, Step by Step
+          </p>
         </div>
 
         {/* Center: Token Progress Card */}
