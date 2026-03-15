@@ -15,19 +15,39 @@ export function LandingPage() {
   const handleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
 
-    const text = (target.closest('[data-name="Button"]') ?? target).textContent ?? '';
+    const button = target.closest('[data-name="Button"]');
+    const text = (button ?? target).textContent ?? '';
 
-    if (text.includes('Log In'))
+    // Check if they clicked the specific SVG button by checking data-name
+    const isSeeHowItWorks = target.closest('[data-name="See How It Works"]') !== null;
+
+    if (text.includes('Log In')) {
       navigate('/login');
-    else if (text.includes('Practice My Hearing') || text.includes('Start Your Preparation'))
+    } else if (text.includes('Practice My Hearing') || text.includes('Start Your Preparation')) {
       getSection(2)?.scrollIntoView({ behavior: 'smooth' });   // Section2 = Status Selection
-    else if (text.includes('See How It Works'))
-      getSection(1)?.scrollIntoView({ behavior: 'smooth' });   // Section = "Most people lose"
-    else if (text.includes('Officially Filed'))
+    } else if (isSeeHowItWorks) {
+      // Changed to getSection(0) because "Most people lose" is the 1st section
+      getSection(0)?.scrollIntoView({ behavior: 'smooth' });   
+    } else if (text.includes('Officially Filed')) {
       handleStatusClick('filed');
-    else if (text.includes('Submitted') || text.includes('Pending'))
+    } else if (text.includes('Submitted') || text.includes('Pending')) {
       handleStatusClick('pending');
+    }
   };
+  
+  //   const text = (target.closest('[data-name="Button"]') ?? target).textContent ?? '';
+
+  //   if (text.includes('Log In'))
+  //     navigate('/login');
+  //   else if (text.includes('Practice My Hearing') || text.includes('Start Your Preparation'))
+  //     getSection(2)?.scrollIntoView({ behavior: 'smooth' });   // Section2 = Status Selection
+  //   else if (text.includes('See How It Works'))
+  //     getSection(1)?.scrollIntoView({ behavior: 'smooth' });   // Section = "Most people lose"
+  //   else if (text.includes('Officially Filed'))
+  //     handleStatusClick('filed');
+  //   else if (text.includes('Submitted') || text.includes('Pending'))
+  //     handleStatusClick('pending');
+  // };
 
   const handleStatusClick = (status: 'filed' | 'pending') => {
     if (isAuthenticated) navigate(`/intake?status=${status}`);
