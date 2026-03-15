@@ -116,12 +116,12 @@ export function CourtPage() {
   const [tokenLimit, setTokenLimit] = useState(3000);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (targetCaseId: number) => {
       try {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
         // Load case data — pass case_id so the backend returns the selected case
-        const caseResponse = await fetch(`${baseUrl}/court/case-data?user_id=${USER_ID}&case_id=${caseId}`);
+        const caseResponse = await fetch(`${baseUrl}/court/case-data?user_id=${USER_ID}&case_id=${targetCaseId}`);
         if (caseResponse.ok) {
           const data = await caseResponse.json();
           setCaseData(data);
@@ -140,7 +140,7 @@ export function CourtPage() {
 
         // Load user's evidence from dashboard (case-specific)
         try {
-          const evidenceRecs = await fetch(`${baseUrl}/evidence/for-case/${caseId}`, {
+          const evidenceRecs = await fetch(`${baseUrl}/evidence/for-case/${targetCaseId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('auth_token') || ''}` }
           }).then(r => r.ok ? r.json() : { recommendations: {} }).then(d => {
             const recs: Record<string, string> = d.recommendations ?? {};
@@ -150,7 +150,7 @@ export function CourtPage() {
           const evidenceWithStatus = await Promise.all(
             evidenceRecs.map(async (rec) => {
               try {
-                const statusRes = await fetch(`${baseUrl}/evidence/status/${USER_ID}?case_id=${caseId}`);
+                const statusRes = await fetch(`${baseUrl}/evidence/status/${USER_ID}?case_id=${targetCaseId}`);
                 const statusData = statusRes.ok ? await statusRes.json() : { status: {} };
                 const folderStatus = statusData.status?.[rec.folderName];
                 return {
@@ -174,11 +174,18 @@ export function CourtPage() {
 
     // If sessionIdParam is present, load historical session instead
     if (sessionIdParam) {
-      courtSession.loadSession(sessionIdParam);
-      setCurrentScreen('hearing');
-      setCurrentStep(1 as HearingStep);
+      const loadHistoricalSession = async () => {
+        const sessionState = await courtSession.loadSession(sessionIdParam);
+        const resolvedCaseId = sessionState?.case_id ?? caseId;
+
+        await loadData(resolvedCaseId);
+        setCurrentScreen('hearing');
+        setCurrentStep(1 as HearingStep);
+      };
+
+      loadHistoricalSession();
     } else {
-      loadData();
+      loadData(caseId);
     }
   }, [USER_ID, sessionIdParam]); // eslint-disable-line react-hooks/exhaustive-deps
 

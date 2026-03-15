@@ -81,6 +81,7 @@ export interface SendMessageResponse {
 
 export interface SessionState {
   session_id: string;
+  case_id?: number | null;
   status: SessionStatus;
   current_speaker: string;
   turn_number: number;

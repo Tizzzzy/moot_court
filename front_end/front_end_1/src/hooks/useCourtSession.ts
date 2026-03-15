@@ -117,6 +117,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
       setState((s) => ({
         ...s,
         sessionId,
+        caseId: sessionState.case_id ?? s.caseId,
         messages,
         submittedEvidence: sessionState.submitted_evidence || [],
         currentSpeaker: sessionState.current_speaker,
@@ -129,6 +130,8 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
 
       // Connect WebSocket
       await websocketService.connect(sessionId);
+
+      return sessionState;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to restore session";
@@ -432,6 +435,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
       setState((s) => ({
         ...s,
         sessionId,
+        caseId: response.case_id ?? s.caseId,
         messages,
         submittedEvidence: response.submitted_evidence || [],
         currentSpeaker: response.current_speaker || "Plaintiff",
@@ -444,6 +448,8 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
 
       // Connect WebSocket for this session (won't send messages though)
       await websocketService.connect(sessionId);
+
+      return response;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load session";

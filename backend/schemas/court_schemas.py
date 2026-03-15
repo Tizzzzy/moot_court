@@ -96,6 +96,7 @@ class SessionStateResponse(BaseModel):
     """Current state of a court session."""
 
     session_id: str
+    case_id: Optional[int] = None
     status: str  # 'active' or 'completed'
     current_speaker: str
     turn_number: int

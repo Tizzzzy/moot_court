@@ -173,6 +173,7 @@ class CourtSessionService:
 
         return {
             "session_id": session_id,
+            "case_id": db_session.case_id if db_session else None,
             "status": status,
             "current_speaker": court_session.current_speaker,
             "turn_number": court_session.turn_number,
