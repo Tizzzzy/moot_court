@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserProfileButton } from '@/components/UserProfileButton';
+import { Link } from 'react-router-dom';
 
 interface DashboardHeaderProps {
   tokensUsed: number;
@@ -27,11 +28,10 @@ export function DashboardHeader({
     <header className="w-full border-b border-gray-100 bg-white h-20">
       <div className="max-w-[1256px] mx-auto px-6 h-full flex items-center justify-between">
         {/* Left: App Name + BETA Badge */}
-        <div 
-          onClick={() => navigate('/', { state: { forceShowLanding: true } })}
-          className="flex flex-col items-start justify-center cursor-pointer hover:opacity-80 transition-opacity"
-          role="button"
-          tabIndex={0}
+        <Link 
+          to="/" 
+          state={{ forceShowLanding: true }}
+          className="flex flex-col items-start justify-center cursor-pointer hover:opacity-80 transition-opacity block"
         >
           <div className="flex items-center gap-[8px] h-[28px]">
             <h1 className="font-semibold text-[#101828] text-[18px] tracking-[-0.4395px]">
@@ -49,7 +49,7 @@ export function DashboardHeader({
           <p className="font-normal text-[#4a5565] text-[14px] leading-[20px] tracking-[-0.1504px] mt-0.5">
             Help Small Claims Plaintiffs Prepare, Step by Step
           </p>
-        </div>
+        </Link>
 
         {/* Center: Token Progress Card */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 w-64 flex-shrink-0">
