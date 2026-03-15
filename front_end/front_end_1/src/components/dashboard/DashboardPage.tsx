@@ -275,6 +275,9 @@ export function DashboardPage() {
     0
   );
 
+  const hasAttemptedSession = filteredSessions.length > 0;
+  const hasAttemptedEvidence = totalFilesUploaded > 0;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -346,6 +349,8 @@ export function DashboardPage() {
               hasCases={hasCases}
               allEvidenceReady={allEvidenceReady}
               hasWinningSession={hasWinningSession}
+              hasAttemptedEvidence={hasAttemptedEvidence}
+              hasAttemptedSession={hasAttemptedSession}
             />
             <SimulationHistory
               sessions={filteredSessions}
