@@ -28,7 +28,7 @@ export function DashboardHeader({
       <div className="max-w-[1256px] mx-auto px-6 h-full flex items-center justify-between">
         {/* Left: App Name + BETA Badge */}
         <div 
-          onClick={() => navigate('/')} 
+          onClick={() => navigate('/', { state: { forceShowLanding: true } })}
           className="flex flex-col items-start justify-center cursor-pointer hover:opacity-80 transition-opacity"
           role="button"
           tabIndex={0}
