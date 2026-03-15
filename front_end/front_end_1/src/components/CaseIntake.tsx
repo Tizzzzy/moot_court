@@ -307,9 +307,23 @@ export function CaseIntake() {
       <div className="bg-white w-full border-b border-[rgba(0,0,0,0.1)] shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)]">
         <div className="flex flex-col h-[81px] items-start justify-center px-[48px] max-w-[1440px] mx-auto">
           <div className="flex h-[48px] items-center justify-between w-full">
-            <div className="flex flex-col items-start">
-              <p className="font-normal leading-[28px] text-[#0a0a0a] text-[20px] tracking-[-0.4492px]">Small Claims Court Prep</p>
-              <p className="font-normal leading-[20px] text-[#4a5565] text-[14px] tracking-[-0.1504px]">We'll help you prepare step by step</p>
+            <div className="flex flex-col items-start justify-center">
+              <div className="flex items-center gap-[8px] h-[28px]">
+                <h1 className="font-semibold text-[#101828] text-[18px] tracking-[-0.4395px]">
+                  Pro Se Pro
+                </h1>
+                <div className="flex items-center gap-[6px]">
+                  <span className="bg-[#dbeafe] border border-[#bedbff] text-[#1447e6] text-[12px] font-medium px-[9px] py-[3px] rounded-[4px] leading-none">
+                    BETA
+                  </span>
+                  <span className="bg-[#dcfce7] border border-[#b9f8cf] text-[#008236] text-[12px] font-medium px-[9px] py-[3px] rounded-[4px] leading-none">
+                    FREE
+                  </span>
+                </div>
+              </div>
+              <p className="font-normal text-[#4a5565] text-[14px] leading-[20px] tracking-[-0.1504px] mt-0.5">
+                Help Small Claims Plaintiffs Prepare, Step by Step
+              </p>
             </div>
             <UserProfileButton />
           </div>
