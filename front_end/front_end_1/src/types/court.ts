@@ -85,6 +85,7 @@ export interface SessionState {
   current_speaker: string;
   turn_number: number;
   history: Message[];
+  submitted_evidence?: EvidenceFileMetadata[];
   verdict_outcome?: string | null;
 }
 
@@ -194,6 +195,7 @@ export interface CourtSessionState {
   verdictIssued: boolean;
   verdictOutcome: string | null;
   messages: ChatMessage[];
+  submittedEvidence: EvidenceFileMetadata[];
   isLoading: boolean;
   error: string | null;
   wsConnected: boolean;

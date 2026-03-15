@@ -188,6 +188,24 @@ async def get_session_state(
         state = service.get_session_state(session_id, db)
         if not state:
             raise ValueError(f"Session {session_id} not found")
+
+        submitted_evidence_rows = (
+            db.query(CourtSubmittedEvidence)
+            .filter(CourtSubmittedEvidence.session_id == session_id)
+            .order_by(CourtSubmittedEvidence.uploaded_at.asc(), CourtSubmittedEvidence.id.asc())
+            .all()
+        )
+        state["submitted_evidence"] = [
+            {
+                "filename": row.filename,
+                "path": row.file_path,
+                "size_bytes": row.size_bytes or 0,
+                "mime_type": row.mime_type or "application/octet-stream",
+                "upload_time": row.uploaded_at or datetime.utcnow(),
+            }
+            for row in submitted_evidence_rows
+        ]
+
         state.setdefault('evidence_upload_allowed', False)
         return SessionStateResponse(**state)
     except Exception as e:

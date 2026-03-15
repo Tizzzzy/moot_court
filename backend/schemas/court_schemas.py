@@ -101,6 +101,7 @@ class SessionStateResponse(BaseModel):
     turn_number: int
     evidence_upload_allowed: bool
     history: List[Dict[str, Any]]
+    submitted_evidence: List["EvidenceFileMetadata"] = []
     verdict_outcome: Optional[str] = None
 
 

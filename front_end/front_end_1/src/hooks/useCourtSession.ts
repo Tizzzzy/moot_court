@@ -38,6 +38,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
     verdictIssued: false,
     verdictOutcome: null,
     messages: [],
+    submittedEvidence: [],
     isLoading: false,
     error: null,
     wsConnected: false,
@@ -75,6 +76,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         ...s,
         sessionId: response.session_id,
         messages: [openingMessage],
+        submittedEvidence: [],
         currentSpeaker: "Plaintiff", // Plaintiff presents case after Judge opens
         turnNumber: 1,
         status: "active",
@@ -116,6 +118,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         ...s,
         sessionId,
         messages,
+        submittedEvidence: sessionState.submitted_evidence || [],
         currentSpeaker: sessionState.current_speaker,
         turnNumber: sessionState.turn_number,
         status: sessionState.status,
@@ -278,6 +281,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
 
         setState((s) => ({
           ...s,
+          submittedEvidence: [...s.submittedEvidence, ...response.uploaded_files],
           isLoading: false,
         }));
       } catch (error) {
@@ -317,6 +321,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
 
         setState((s) => ({
           ...s,
+          submittedEvidence: [...s.submittedEvidence, ...response.uploaded_files],
           isLoading: false,
         }));
 
@@ -428,6 +433,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         ...s,
         sessionId,
         messages,
+        submittedEvidence: response.submitted_evidence || [],
         currentSpeaker: response.current_speaker || "Plaintiff",
         turnNumber: response.turn_number || 0,
         status: response.status,

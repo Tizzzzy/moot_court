@@ -190,6 +190,26 @@ export function CourtPage() {
     };
   }, [previewFile]);
 
+  useEffect(() => {
+    const restoredEvidence: EvidenceFile[] = (courtSession.submittedEvidence || []).map((file: {
+      filename: string;
+      mime_type: string;
+      size_bytes: number;
+    }) => ({
+      name: file.filename,
+      type: inferMimeType(file.filename, file.mime_type),
+      size: file.size_bytes,
+      serverFilename: file.filename,
+    }));
+
+    setEvidenceFiles(restoredEvidence);
+    setSubmittedEvidenceNames(restoredEvidence.map((file: EvidenceFile) => file.name));
+
+    if (sessionIdParam && restoredEvidence.length > 0) {
+      setShowSidePanel(true);
+    }
+  }, [courtSession.submittedEvidence, sessionIdParam]);
+
   const handleStartHearing = async () => {
     setCurrentScreen('hearing');
     setCurrentStep(1);
@@ -202,13 +222,6 @@ export function CourtPage() {
       if (pendingPreparedFolders.length > 0) {
         const preparedUploaded = await courtSession.submitPreparedEvidence(USER_ID, caseId, pendingPreparedFolders);
         if (preparedUploaded && preparedUploaded.length > 0) {
-          const preparedEvidenceFiles: EvidenceFile[] = preparedUploaded.map((file) => ({
-            name: file.filename,
-            type: inferMimeType(file.filename, file.mime_type),
-            size: file.size_bytes,
-            serverFilename: file.filename,
-          }));
-          setEvidenceFiles((prev) => [...prev, ...preparedEvidenceFiles]);
           setEvidencePresented(true);
         }
         setPendingPreparedFolders([]);
@@ -219,15 +232,7 @@ export function CourtPage() {
       if (pendingEvidenceFiles.length > 0) {
         const uploaded = await courtSession.uploadEvidence(pendingEvidenceFiles);
         if (uploaded && uploaded.length > 0) {
-          const uploadedEvidenceFiles: EvidenceFile[] = uploaded.map((file) => ({
-            name: file.filename,
-            type: inferMimeType(file.filename, file.mime_type),
-            size: file.size_bytes,
-            serverFilename: file.filename,
-          }));
-          setEvidenceFiles(prev => [...prev, ...uploadedEvidenceFiles]);
-        } else {
-          setEvidenceFiles(prev => [...prev, ...pendingEvidence]);
+          setEvidencePresented(true);
         }
         setPendingEvidence([]);
         setPendingEvidenceFiles([]);
