@@ -193,13 +193,24 @@ export function DashboardPage() {
     (s) => !selectedCaseId || s.case_id === selectedCaseId
   );
 
+  // Journey completion rules:
+  // - Evidence stage completes only when every recommended evidence category is ready.
+  // - Practice stage completes only when at least one simulation has a win verdict.
+  const allEvidenceReady =
+    evidenceCategories.length > 0 &&
+    evidenceCategories.every((_, index) => evidenceStates[index]?.status === "ready");
+
+  const hasWinningSession = filteredSessions.some(
+    (session) => (session.verdict_outcome ?? "").toLowerCase() === "win"
+  );
+
   // Determine current preparation step
   const currentPreparationStep: PreparationStep = dashboardSummary
     ? !dashboardSummary.cases.length
       ? "intake"
-      : !evidenceCategories.length
+      : !allEvidenceReady
         ? "evidence"
-        : !dashboardSummary.sessions.length
+        : !hasWinningSession
           ? "practice"
           : "final"
     : "intake";
