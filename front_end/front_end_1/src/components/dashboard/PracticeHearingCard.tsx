@@ -15,9 +15,9 @@ export function PracticeHearingCard({
   return (
     <div className="bg-[#155dfc] rounded-[14px] shadow-[0px_10px_15px_0px_rgba(0,0,0,0.1),0px_4px_6px_0px_rgba(0,0,0,0.1)] p-6 flex items-center justify-between">
       <div className="flex-1">
-        <div className="inline-block px-3 py-1 bg-[#2b7fff] text-white text-xs font-semibold rounded-full mb-3">
+        {/* <div className="inline-block px-3 py-1 bg-[#2b7fff] text-white text-xs font-semibold rounded-full mb-3">
           Recommended
-        </div>
+        </div> */}
         <h3 className="text-xl font-semibold text-white mb-1">Practice Hearing</h3>
         <p className="text-[#dbeafe] text-sm">
           Simulate a small claims court hearing with AI judge and defendant
