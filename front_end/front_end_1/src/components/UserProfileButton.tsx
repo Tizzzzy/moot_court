@@ -34,7 +34,7 @@ export function UserProfileButton() {
     // appending the userId automatically based on our previous setup!)
     navigate('/dashboard'); 
   };
-  
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -58,7 +58,7 @@ export function UserProfileButton() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={handleDashboard} variant="default" className="cursor-pointer">
-          <LayoutDashboard className="w-4 h-4 mr-2" />
+          <LayoutDashboard className="w-4 h-4" />
           My Dashboard
         </DropdownMenuItem>
 
