@@ -77,7 +77,7 @@ export function CaseDetailsCard({ caseData, isLoading, onViewMore }: CaseDetails
         {/* Case Type */}
         <div>
           <p className="text-[16px] text-[#62748e] mb-1">Case Type</p>
-          <p className="text-[16px] text-[#0f172b] font-medium">
+          <p className="text-[16px] text-[#0f172b] font-medium capitalize">
             {caseData.case_type?.replace(/-/g, ' ') || 'N/A'}
           </p>
         </div>
