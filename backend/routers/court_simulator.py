@@ -880,6 +880,27 @@ async def websocket_endpoint(
     })
 
     try:
+        service = get_session_service()
+        session_state = service.get_session_state(session_id, db)
+        if session_state:
+            current_speaker = session_state.get("current_speaker", "Plaintiff")
+            verdict_outcome = session_state.get("verdict_outcome")
+
+            # If the session was left in a non-plaintiff state and no loop is running,
+            # we need to recover. For safety, return turn to Plaintiff so the user can resume.
+            if current_speaker not in ["Plaintiff", "Verdict"]:
+                current_speaker = "Plaintiff"
+                court_session = service.get_session(session_id, db)
+                if court_session:
+                    court_session.current_speaker = "Plaintiff"
+                    service.save_session(session_id, db)
+
+            # Send next speaker to unlock the UI for the user
+            await ws_manager.send_next_speaker(session_id, current_speaker, verdict_outcome)
+    except Exception as e:
+        logger.error(f"Error resuming session state on WS connect: {e}")
+
+    try:
         while True:
             # Keep connection alive - messages are sent via broadcast
             await websocket.receive_text()
