@@ -118,7 +118,9 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         messages,
         currentSpeaker: sessionState.current_speaker,
         turnNumber: sessionState.turn_number,
-        status: "active",
+        status: sessionState.status,
+        verdictIssued: sessionState.status === "completed",
+        verdictOutcome: sessionState.verdict_outcome || null,
         isLoading: false,
       }));
 
@@ -231,6 +233,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         if (response.status === "verdict") {
           setState((s) => ({
             ...s,
+            status: "completed",
             verdictIssued: true,
             verdictOutcome: response.verdict_outcome || s.verdictOutcome,
             isLoading: false,
@@ -401,7 +404,8 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
   }, [state.sessionId]);
 
   /**
-   * Load a historical session (read-only mode).
+   * Load an existing session.
+   * Completed sessions are read-only, active sessions are resumable.
    */
   const loadSession = useCallback(async (sessionId: string) => {
     setState((s) => ({ ...s, isLoading: true, error: null }));
@@ -424,10 +428,10 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         ...s,
         sessionId,
         messages,
-        currentSpeaker: response.current_speaker || "Verdict",
+        currentSpeaker: response.current_speaker || "Plaintiff",
         turnNumber: response.turn_number || 0,
-        status: "completed", // Historical sessions are always completed
-        verdictIssued: true, // Historical sessions always have verdicts
+        status: response.status,
+        verdictIssued: response.status === "completed",
         verdictOutcome: response.verdict_outcome || null,
         isLoading: false,
       }));
@@ -519,6 +523,7 @@ export function useCourtSession(userId: string | null, caseId: number | null) {
         const isVerdictSpeaker = nextSpeaker.speaker === "Verdict";
         setState((s) => ({
           ...s,
+          status: isVerdictSpeaker ? "completed" : s.status,
           currentSpeaker: nextSpeaker.speaker,
           verdictIssued: isVerdictSpeaker,
           verdictOutcome: isVerdictSpeaker && nextSpeaker.verdict_outcome
