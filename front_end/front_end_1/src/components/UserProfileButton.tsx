@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, LayoutDashboard } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -29,6 +29,12 @@ export function UserProfileButton() {
     navigate('/login');
   };
 
+  const handleDashboard = () => {
+    // Navigates to the dashboard. (Your DashboardPage already handles 
+    // appending the userId automatically based on our previous setup!)
+    navigate('/dashboard'); 
+  };
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -50,6 +56,12 @@ export function UserProfileButton() {
           </div>
         </div>
         <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={handleDashboard} variant="default" className="cursor-pointer">
+          <LayoutDashboard className="w-4 h-4 mr-2" />
+          My Dashboard
+        </DropdownMenuItem>
+
         <DropdownMenuItem onClick={handleLogout} variant="default">
           <LogOut className="w-4 h-4" />
           Log out
