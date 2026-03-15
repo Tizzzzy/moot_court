@@ -22,7 +22,7 @@ export function LandingPage() {
     else if (text.includes('Practice My Hearing') || text.includes('Start Your Preparation'))
       getSection(2)?.scrollIntoView({ behavior: 'smooth' });   // Section2 = Status Selection
     else if (text.includes('See How It Works'))
-      getSection(0)?.scrollIntoView({ behavior: 'smooth' });   // Section = "Most people lose"
+      getSection(1)?.scrollIntoView({ behavior: 'smooth' });   // Section = "Most people lose"
     else if (text.includes('Officially Filed'))
       handleStatusClick('filed');
     else if (text.includes('Submitted') || text.includes('Pending'))
