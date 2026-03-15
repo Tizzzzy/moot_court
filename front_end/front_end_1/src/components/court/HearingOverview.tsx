@@ -1,6 +1,6 @@
-import { ArrowLeft } from 'lucide-react';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import type { CaseData } from '../App';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface HearingOverviewProps {
   onStartHearing: () => void;
@@ -134,6 +134,23 @@ export function HearingOverview({ onStartHearing, caseData, onBackToDashboard, t
               ))}
             </div>
           </div>
+
+          {/* --- NEW: Before You Begin Notice --- */}
+          <div className="bg-[#eff6ff] rounded-2xl p-6 border border-[#bfdbfe]">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-[#2563eb] flex-shrink-0 mt-0.5" />
+              <div>
+                <h2 className="text-[18px] font-semibold text-[#1e3a8a] mb-2 tracking-[-0.01em]">
+                  Before You Begin
+                </h2>
+                <div className="text-[14px] text-[#1e3a8a]/80 space-y-1">
+                  <p>This simulation requires both a live conversation with the Judge and evidence submission.</p>
+                  <p>Please make sure you are ready before starting the court simulation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* ------------------------------------- */}
 
           {/* Start Button */}
           <div className="text-center pt-2">
