@@ -19,7 +19,7 @@ const CASE_TYPE_OPTIONS = [
   "security-deposit",
   "breach-of-contract",
   "property-damage",
-  "Personal Injury",
+  "personal-injury",
   "other",
 ];
 
