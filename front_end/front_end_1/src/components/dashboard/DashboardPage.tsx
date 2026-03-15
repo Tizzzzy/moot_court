@@ -205,15 +205,17 @@ export function DashboardPage() {
   );
 
   // Determine current preparation step
-  const currentPreparationStep: PreparationStep = dashboardSummary
-    ? !dashboardSummary.cases.length
-      ? "intake"
-      : !allEvidenceReady
-        ? "evidence"
-        : !hasWinningSession
-          ? "practice"
-          : "final"
-    : "intake";
+  // const currentPreparationStep: PreparationStep = dashboardSummary
+  //   ? !dashboardSummary.cases.length
+  //     ? "intake"
+  //     : !allEvidenceReady
+  //       ? "evidence"
+  //       : !hasWinningSession
+  //         ? "practice"
+  //         : "final"
+  //   : "intake";
+
+  const hasCases = dashboardSummary ? dashboardSummary.cases.length > 0 : false;
 
   const handleLogout = () => {
     logout();
@@ -340,7 +342,11 @@ export function DashboardPage() {
 
           {/* Right Sidebar */}
           <div className="w-[395px] space-y-6">
-            <PreparationJourney currentStep={currentPreparationStep} />
+            <PreparationJourney 
+              hasCases={hasCases}
+              allEvidenceReady={allEvidenceReady}
+              hasWinningSession={hasWinningSession}
+            />
             <SimulationHistory
               sessions={filteredSessions}
               onSessionClick={handleSessionClick}
