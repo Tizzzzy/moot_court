@@ -205,9 +205,9 @@ export function CourtPage() {
     setEvidenceFiles(restoredEvidence);
     setSubmittedEvidenceNames(restoredEvidence.map((file: EvidenceFile) => file.name));
 
-    if (sessionIdParam && restoredEvidence.length > 0) {
-      setShowSidePanel(true);
-    }
+    // if (sessionIdParam && restoredEvidence.length > 0) {
+    //   setShowSidePanel(true);
+    // }
   }, [courtSession.submittedEvidence, sessionIdParam]);
 
   const handleStartHearing = async () => {
