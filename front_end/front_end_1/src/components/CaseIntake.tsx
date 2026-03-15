@@ -96,11 +96,11 @@ export function CaseIntake() {
     claimSummary: '',
     amountSought: '',
     filingDate: null,
-    hasFilingDate: true,
+    hasFilingDate: false,
     incidentDate: null,
     courtDate: null,
     hasCourtDate: false,
-    serviceStatus: null,
+    serviceStatus: 'no',
     serviceDate: null
   });
 
