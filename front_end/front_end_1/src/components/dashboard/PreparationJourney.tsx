@@ -1,13 +1,14 @@
 import React from 'react';
 import { Check, Clock } from 'lucide-react';
-import { PreparationStep } from '@/types/dashboard';
 
 interface PreparationJourneyProps {
-  currentStep: PreparationStep;
+  hasCases: boolean;
+  allEvidenceReady: boolean;
+  hasWinningSession: boolean;
 }
-
+  
 const steps: {
-  step: PreparationStep;
+  step: 'intake' | 'evidence' | 'practice' | 'final';
   title: string;
   duration: string;
 }[] = [
@@ -33,13 +34,25 @@ const steps: {
   },
 ];
 
-export function PreparationJourney({ currentStep }: PreparationJourneyProps) {
-  const getCurrentStepIndex = (): number => {
-    const stepOrder: PreparationStep[] = ['intake', 'evidence', 'practice', 'final'];
-    return stepOrder.indexOf(currentStep);
+export function PreparationJourney({ hasCases, allEvidenceReady, hasWinningSession }: PreparationJourneyProps) {
+  const getStepStatus = (stepId: 'intake' | 'evidence' | 'practice' | 'final') => {
+    switch (stepId) {
+      case 'intake':
+        return hasCases ? 'completed' : 'current';
+      case 'evidence':
+        if (!hasCases) return 'upcoming';
+        return allEvidenceReady ? 'completed' : 'current';
+      case 'practice':
+        if (!hasCases) return 'upcoming';
+        return hasWinningSession ? 'completed' : 'current';
+      case 'final':
+        // Final prep unlocks ONLY when both Evidence AND Practice are finished
+        if (allEvidenceReady && hasWinningSession) return 'current';
+        return 'upcoming';
+      default:
+        return 'upcoming';
+    }
   };
-
-  const currentIndex = getCurrentStepIndex();
 
   return (
     <div className="border border-[rgba(0,0,0,0.1)] rounded-[14px] p-6 bg-white">
@@ -47,8 +60,9 @@ export function PreparationJourney({ currentStep }: PreparationJourneyProps) {
 
       <div className="space-y-4 relative">
         {steps.map((item, index) => {
-          const isCompleted = index < currentIndex;
-          const isCurrent = index === currentIndex;
+          const status = getStepStatus(item.step);
+          const isCompleted = status === 'completed';
+          const isCurrent = status === 'current';
 
           return (
             <div key={item.step} className="flex gap-4 relative">
